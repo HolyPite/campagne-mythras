@@ -1,0 +1,10 @@
+# PDFs sous copyright — ne pas publier
+*.pdf
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Claude
+.claude/
