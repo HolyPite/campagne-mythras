@@ -499,7 +499,7 @@ const D = {
   ],
   profSkills:[],magicSkills:[],combatStyles:[],
   folkSpells:[],sorcSpells:[],sorcSchoolQuote:'',
-  weapons:[],equipment:[],
+  weapons:[],equipment:[],  // equipment items: {name, qty, enc}
   enc:{current:'0',encumbered:'0',overloaded:'0'},
   lp:{current:3,max:3},mp:{current:10,modMax:0},
   statMods:{},
@@ -562,6 +562,7 @@ function migrateState(S){
   if(!S.skillMods) S.skillMods=JSON.parse(JSON.stringify(D.skillMods));
   Object.keys(D.skillMods).forEach(k=>{ if(S.skillMods[k]===undefined) S.skillMods[k]=D.skillMods[k]; });
   S.hitLocations=S.hitLocations||D.hitLocations;
+  (S.equipment||[]).forEach(e=>{ if(e.qty===undefined) e.qty=1; });
   if(!S.statMods) S.statMods={};
   if(S.mp.modMax===undefined) S.mp.modMax=0;
   delete S.mp.max;
@@ -1116,28 +1117,41 @@ function renderWeapons(){
 
 function renderEquipment(){
   const c=document.getElementById('equipment');if(!c)return;
-  if(editMode){
-    c.innerHTML=S.equipment.map((e,i)=>`
-      <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(34,34,64,.5)">
-        <input class="e-input w100" type="text" value="${esc(e.name)}" oninput="S.equipment[${i}].name=this.value;save()">
-        <span style="font-size:11px;color:var(--muted)">ENC</span>
-        <input class="e-input num" type="number" min="0" value="${esc(e.enc)}" oninput="S.equipment[${i}].enc=this.value;save()" style="width:35px">
-        <button class="del-btn" onclick="S.equipment.splice(${i},1);save();renderEquipment()">×</button>
-      </div>`).join('')
-    +`<button class="add-btn" style="margin-top:8px" onclick="S.equipment.push({name:'Objet',enc:'0'});save();renderEquipment()">+ Ajouter</button>`
-    +`<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;font-size:12px;align-items:center">
-        <span style="color:var(--muted)">ENC:</span><input class="e-input sm" type="text" value="${esc(S.enc.current)}" oninput="S.enc.current=this.value;save()">
-        <span style="color:var(--muted)">Encombré:</span><input class="e-input sm" type="text" value="${esc(S.enc.encumbered)}" oninput="S.enc.encumbered=this.value;save()">
-        <span style="color:var(--muted)">Surchargé:</span><input class="e-input sm" type="text" value="${esc(S.enc.overloaded)}" oninput="S.enc.overloaded=this.value;save()">
-      </div>`;
-  } else {
-    c.innerHTML=S.equipment.map(e=>`
-      <div class="skill-row"><div class="skill-name-col"><div class="skill-name">${esc(e.name)}</div></div><div style="font-size:11px;color:var(--muted)">ENC ${esc(e.enc)}</div></div>`).join('')
-    +`<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:12px">
-        <span style="color:var(--muted)">ENC / Encombré / Surchargé</span>
-        <span style="color:var(--green)">${esc(S.enc.current)} / ${esc(S.enc.encumbered)} / ${esc(S.enc.overloaded)}</span>
-      </div>`;
-  }
+  const rows=S.equipment.map((e,i)=>{
+    const qty=e.qty??1;
+    const qtyCtrl=`<div style="display:flex;align-items:center;gap:3px;flex-shrink:0">
+      <button onclick="adjEquipQty(${i},-1)" style="width:22px;height:22px;border-radius:4px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:14px;cursor:pointer;line-height:1;flex-shrink:0">−</button>
+      <span style="font-size:13px;font-weight:700;color:var(--green);min-width:24px;text-align:center">${qty}</span>
+      <button onclick="adjEquipQty(${i},1)" style="width:22px;height:22px;border-radius:4px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:14px;cursor:pointer;line-height:1;flex-shrink:0">+</button>
+    </div>`;
+    const encTag=`<span style="font-size:10px;color:var(--muted);flex-shrink:0">${editMode?`ENC <input class="e-input num" type="number" min="0" value="${esc(e.enc)}" oninput="S.equipment[${i}].enc=this.value;save()" style="width:30px">`:`ENC ${esc(e.enc)}`}</span>`;
+    return `<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(34,34,64,.5)">
+      <input style="flex:1;min-width:0;background:transparent;border:none;border-bottom:1px solid ${editMode?'var(--green-dim)':'transparent'};color:var(--text);font-size:13px;font-weight:500;outline:none;padding:1px 2px;transition:border-color .15s" type="text" value="${esc(e.name)}" oninput="S.equipment[${i}].name=this.value;save()" onfocus="this.style.borderBottomColor='var(--green-dim)'" onblur="this.style.borderBottomColor='${editMode?'var(--green-dim)':'transparent'}'">
+      ${qtyCtrl}
+      ${encTag}
+      <button class="del-btn" onclick="S.equipment.splice(${i},1);save();renderEquipment()">×</button>
+    </div>`;
+  }).join('');
+  const encBar=`<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:12px">
+    ${editMode
+      ?`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <span style="color:var(--muted)">ENC:</span><input class="e-input sm" type="text" value="${esc(S.enc.current)}" oninput="S.enc.current=this.value;save()">
+          <span style="color:var(--muted)">Encombré:</span><input class="e-input sm" type="text" value="${esc(S.enc.encumbered)}" oninput="S.enc.encumbered=this.value;save()">
+          <span style="color:var(--muted)">Surchargé:</span><input class="e-input sm" type="text" value="${esc(S.enc.overloaded)}" oninput="S.enc.overloaded=this.value;save()">
+        </div>`
+      :`<span style="color:var(--muted)">ENC / Encombré / Surchargé</span>
+        <span style="color:var(--green)">${esc(S.enc.current)} / ${esc(S.enc.encumbered)} / ${esc(S.enc.overloaded)}</span>`}
+  </div>`;
+  c.innerHTML=rows
+    +`<button class="add-btn" style="margin-top:8px" onclick="S.equipment.push({name:'Nouvel objet',qty:1,enc:'0'});save();renderEquipment()">+ Ajouter un objet</button>`
+    +encBar;
+}
+
+function adjEquipQty(i,delta){
+  const e=S.equipment[i];if(!e)return;
+  e.qty=Math.max(0,(e.qty??1)+delta);
+  if(e.qty===0&&confirm('Quantité à 0 — supprimer l\'objet ?')){S.equipment.splice(i,1);}
+  save();renderEquipment();
 }
 
 // ══ JOURNAL PAGES ══
