@@ -1,0 +1,1538 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mythras">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#3dffaa">
+<meta name="description" content="Fiche de personnage Mythras — JdR">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Fiche Mythras</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0a0a12;--card:#13131f;--card2:#1a1a2e;
+  --green:#3dffaa;--green-dim:#1a6644;
+  --yellow:#ffd166;--red:#ff4d6d;
+  --text:#e0e0f0;--muted:#6677aa;--border:#222240;
+}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;overflow-x:hidden}
+.app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+.header{background:linear-gradient(135deg,#0a0a12,#13131f);padding:16px 20px 12px;border-bottom:1px solid var(--green-dim);position:sticky;top:0;z-index:100}
+.char-name{font-size:22px;font-weight:700;color:var(--green);letter-spacing:1px}
+.char-subtitle{font-size:12px;color:var(--muted);margin-top:2px}
+.content{flex:1;overflow-y:auto;padding:16px;padding-bottom:84px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px}
+.card-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--green);margin-bottom:12px}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.stat-box{background:var(--card2);border-radius:8px;padding:8px 4px;text-align:center;border:1px solid var(--border)}
+.stat-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.stat-value{font-size:22px;font-weight:700;color:var(--text);line-height:1.2}
+.stat-value.green{color:var(--green)}
+.attr-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.attr-item{display:flex;justify-content:space-between;align-items:center;background:var(--card2);border-radius:8px;padding:8px 12px}
+.attr-name{font-size:12px;color:var(--muted)}
+.attr-value{font-size:16px;font-weight:700;color:var(--green)}
+.tracker{display:flex;align-items:center;justify-content:space-between;background:var(--card2);border-radius:10px;padding:10px 12px;margin-bottom:8px}
+.tracker-label{font-size:13px;font-weight:600}
+.tracker-controls{display:flex;align-items:center;gap:12px}
+.tracker-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.tracker-btn:active{transform:scale(.9);background:var(--green-dim)}
+.tracker-display{font-size:18px;font-weight:700;color:var(--green);min-width:50px;text-align:center}
+.hit-location{display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);gap:10px}
+.hit-location:last-child{border-bottom:none}
+.hit-range{font-size:11px;color:var(--muted);width:38px;text-align:center;background:var(--card2);border-radius:4px;padding:2px}
+.hit-name{flex:1;font-size:13px;font-weight:500}
+.hit-hp-controls{display:flex;align-items:center;gap:6px}
+.hit-btn{width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.hit-btn:active{background:var(--green-dim)}
+.hit-hp-display{font-size:14px;font-weight:700;min-width:38px;text-align:center;color:var(--green)}
+.hit-hp-display.damaged{color:var(--yellow)}
+.hit-hp-display.critical{color:var(--red)}
+.skill-row{display:flex;align-items:center;padding:7px 0;border-bottom:1px solid rgba(34,34,64,.5);gap:8px}
+.skill-row:last-child{border-bottom:none}
+.skill-dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0}
+.skill-dot.no{background:transparent;border:1px solid var(--border)}
+.skill-name-col{flex:1;min-width:0}
+.skill-name{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.skill-base-formula{font-size:10px;color:var(--muted);margin-top:1px}
+.skill-mod-ctrl{display:flex;align-items:center;gap:3px;flex-shrink:0}
+.skill-mod-btn{width:22px;height:22px;border-radius:4px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
+.skill-mod-btn:active{background:var(--green-dim)}
+.skill-mod-val{font-size:11px;color:var(--yellow);min-width:30px;text-align:center;font-weight:600}
+.skill-pct{font-size:15px;font-weight:700;color:var(--green);min-width:40px;text-align:right;flex-shrink:0}
+.fatigue-states{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.fatigue-state{padding:8px 10px;border-radius:8px;border:1px solid var(--border);cursor:pointer;background:var(--card2);transition:all .15s}
+.fatigue-state.active{border-color:var(--green);background:var(--green-dim)}
+.fatigue-state.danger.active{border-color:var(--red);background:rgba(255,77,109,.15)}
+.fatigue-name{font-size:12px;font-weight:600}
+.fatigue-effect{font-size:10px;color:var(--muted);margin-top:2px}
+.spell-card{background:var(--card2);border-radius:10px;padding:12px;margin-bottom:8px;border-left:3px solid var(--green);cursor:pointer}
+.spell-card.folk{border-left-color:var(--yellow)}
+.spell-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;gap:8px}
+.spell-name{font-size:14px;font-weight:700}
+.spell-cost{font-size:11px;color:var(--green);background:rgba(61,255,170,.1);padding:2px 8px;border-radius:10px}
+.spell-cost.folk{color:var(--yellow);background:rgba(255,209,102,.1)}
+.spell-detail{display:none;margin-top:8px}
+.spell-card.open .spell-detail{display:block}
+.spell-desc{font-size:12px;color:var(--muted);line-height:1.5}
+.spell-notes{font-size:11px;color:var(--green-dim);margin-top:6px;font-style:italic;border-top:1px solid var(--border);padding-top:6px}
+.journal-entry{background:var(--card2);border-radius:10px;padding:12px;margin-bottom:8px}
+.journal-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:8px}
+.journal-title{font-size:14px;font-weight:700;flex:1}
+.status-badge{font-size:10px;padding:3px 8px;border-radius:10px;font-weight:700;text-transform:uppercase;white-space:nowrap;cursor:pointer}
+.status-badge.active{background:rgba(61,255,170,.12);color:var(--green)}
+.status-badge.completed{background:rgba(102,102,170,.2);color:var(--muted)}
+.status-badge.failed{background:rgba(255,77,109,.12);color:var(--red)}
+.journal-text{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:4px}
+.journal-meta{font-size:11px;color:var(--green-dim);font-style:italic}
+textarea{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:12px;font-size:13px;font-family:inherit;line-height:1.6;resize:none;min-height:130px}
+textarea:focus{outline:none;border-color:var(--green-dim)}
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--card);border-top:1px solid var(--border);display:flex;justify-content:space-around;padding:8px 0 12px;z-index:100}
+.nav-btn{background:none;border:none;color:var(--muted);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 12px;border-radius:8px}
+.nav-btn.active{color:var(--green)}
+.nav-icon{font-size:20px}
+.nav-label{font-size:10px;font-weight:600;letter-spacing:.5px}
+.identity-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(34,34,64,.5);font-size:13px;gap:8px}
+.identity-row:last-child{border-bottom:none}
+.identity-key{color:var(--muted);flex-shrink:0}
+.identity-val{font-weight:500;text-align:right;flex:1}
+.money-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.money-box{background:var(--card2);border-radius:8px;padding:10px;text-align:center}
+.money-label{font-size:11px;color:var(--muted);margin-bottom:4px}
+.money-value{font-size:20px;font-weight:700;color:var(--yellow)}
+.ability-tag{display:inline-block;background:rgba(61,255,170,.07);border:1px solid var(--green-dim);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--green);margin:3px}
+.passion-row{margin-bottom:10px}
+.passion-header{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;gap:8px}
+.passion-pct{color:var(--green);font-weight:700}
+.passion-bar-bg{background:var(--card2);border-radius:4px;height:5px;overflow:hidden}
+.passion-bar-fill{height:100%;background:linear-gradient(90deg,var(--green-dim),var(--green));border-radius:4px}
+.weapon-card{background:var(--card2);border-radius:10px;padding:10px;margin-bottom:8px}
+.weapon-name{font-size:14px;font-weight:700;margin-bottom:6px}
+.weapon-stats{display:flex;gap:6px;flex-wrap:wrap}
+.weapon-stat{font-size:11px;background:var(--card);padding:2px 8px;border-radius:6px;color:var(--muted)}
+.weapon-stat span{color:var(--text);font-weight:600}
+.weapon-effects{margin-top:6px;font-size:11px;color:var(--yellow)}
+.add-btn{width:100%;padding:10px;background:rgba(61,255,170,.05);border:1px dashed var(--green-dim);border-radius:8px;color:var(--green);font-size:13px;cursor:pointer;text-align:center;margin-top:4px}
+.add-btn:active{background:rgba(61,255,170,.12)}
+.tab{display:none}
+.tab.active{display:block}
+.school-quote{font-size:11px;color:var(--muted);margin-bottom:10px;padding:8px;background:var(--card2);border-radius:6px;font-style:italic;border-left:2px solid var(--green-dim)}
+/* EDIT MODE */
+.edit-banner{background:rgba(255,209,102,.07);border:1px solid rgba(255,209,102,.25);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:var(--yellow);text-align:center}
+.edit-btn-hdr{background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);cursor:pointer;font-size:12px;padding:5px 10px;white-space:nowrap;flex-shrink:0}
+.edit-btn-hdr.on{border-color:var(--yellow);color:var(--yellow)}
+.del-btn{width:22px;height:22px;border-radius:50%;background:rgba(255,77,109,.1);border:1px solid rgba(255,77,109,.35);color:var(--red);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.del-btn:active{background:rgba(255,77,109,.3)}
+.e-input{background:transparent;border:none;border-bottom:1px solid var(--green-dim);color:var(--text);padding:1px 3px;font-size:inherit;font-family:inherit;outline:none;min-width:0}
+.e-input:focus{border-bottom-color:var(--green)}
+.e-input.w100{width:100%}
+.e-input.sm{width:55px;text-align:center}
+.e-input.num{width:42px;text-align:center}
+.e-stat{background:transparent;border:none;border-bottom:1px solid var(--green-dim);color:var(--text);font-size:20px;font-weight:700;text-align:center;width:42px;outline:none;padding:0}
+.e-stat:focus{border-bottom-color:var(--green)}
+.e-stat.green{color:var(--green)}
+.e-ta{width:100%;background:var(--card2);border:1px solid var(--green-dim);border-radius:6px;color:var(--text);padding:8px;font-size:12px;font-family:inherit;line-height:1.5;resize:none;outline:none}
+.e-ta:focus{border-color:var(--green)}
+/* SUCCESS COUNTER */
+.succ-btn{min-width:26px;height:22px;border-radius:11px;border:1px solid var(--border);background:var(--card2);color:var(--muted);font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0 5px;transition:all .15s;user-select:none}
+.succ-btn.has{border-color:var(--green-dim);background:rgba(61,255,170,.12);color:var(--green);font-weight:700}
+/* QUEST */
+.quest-active{background:var(--card2);border-radius:12px;padding:14px;margin-bottom:10px;border-left:3px solid var(--green)}
+.quest-archive{background:var(--card2);border-radius:10px;padding:10px 12px;margin-bottom:6px;opacity:.7}
+.quest-archive:hover{opacity:1}
+.q-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.q-btn{padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--muted);font-size:12px;cursor:pointer}
+.q-btn.green{border-color:var(--green-dim);color:var(--green)}
+.q-btn.red{border-color:rgba(255,77,109,.4);color:var(--red)}
+.q-btn.yellow{border-color:rgba(255,209,102,.3);color:var(--yellow)}
+.archives-toggle{width:100%;padding:8px;background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:12px;cursor:pointer;margin-top:4px;text-align:left}
+.archives-toggle:hover{border-color:var(--green-dim);color:var(--green)}
+/* CHAR MANAGER */
+.char-card{display:flex;align-items:center;gap:12px;background:var(--card2);border-radius:12px;padding:14px;margin-bottom:10px;border:1px solid var(--border)}
+.char-card.active{border-color:var(--green-dim);background:rgba(61,255,170,.04)}
+/* JOURNAL PAGES */
+.journal-page{background:var(--card2);border-radius:12px;padding:14px;margin-bottom:12px;border:1px solid var(--border);border-left:3px solid var(--green-dim)}
+.journal-page.archived{border-left-color:var(--border);opacity:.75}
+.jpage-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.jpage-title{flex:1;min-width:0;background:none;border:none;border-bottom:1px solid transparent;color:var(--text);font-size:15px;font-weight:700;outline:none;font-family:inherit;padding:2px 0;transition:border-color .15s}
+.jpage-title:focus{border-bottom-color:var(--green-dim)}
+.jpage-date{font-size:10px;color:var(--muted);white-space:nowrap;flex-shrink:0}
+.jpage-actions{display:flex;gap:4px;flex-shrink:0}
+.jpage-text{width:100%;background:none;border:none;color:var(--text);font-size:13px;line-height:1.65;resize:vertical;outline:none;font-family:inherit;min-height:70px;padding:0}
+.jpage-draw-bar{display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:8px;border-top:1px solid var(--border)}
+/* CANVAS */
+.canvas-wrap{margin-top:8px;border-radius:10px;overflow:hidden;border:1px solid var(--border)}
+.canvas-toolbar{display:flex;align-items:center;gap:4px;padding:6px 8px;background:var(--card);flex-wrap:wrap;border-bottom:1px solid var(--border)}
+.draw-tool-btn{width:30px;height:28px;border-radius:6px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s}
+.draw-tool-btn.active{border-color:var(--green-dim);background:rgba(61,255,170,.12);color:var(--green)}
+.draw-color-btn{width:22px;height:22px;border-radius:50%;border:2px solid transparent;cursor:pointer;flex-shrink:0;transition:all .12s}
+.draw-color-btn:hover,.draw-color-btn.sel{border-color:#fff;transform:scale(1.2)}
+.draw-sep{width:1px;height:20px;background:var(--border);margin:0 2px;flex-shrink:0}
+.draw-size-btn{background:none;border:1px solid transparent;border-radius:4px;color:var(--text);cursor:pointer;font-size:13px;padding:2px 5px;line-height:1;transition:all .12s}
+.draw-size-btn:hover,.draw-size-btn.sel{background:var(--card2);border-color:var(--border)}
+.draw-canvas{width:100%;height:280px;display:block;background:#fafafa;touch-action:none;cursor:crosshair}
+/* DICE ROLLER */
+.dice-type-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+.die-btn{position:relative;display:flex;align-items:center;justify-content:center;height:58px;border:1px solid var(--border);border-radius:10px;background:var(--card2);color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;flex-direction:column;gap:2px;transition:all .15s;user-select:none}
+.die-btn.sel{border-color:var(--green-dim);background:rgba(61,255,170,.1);color:var(--green)}
+.die-icon{font-size:22px;line-height:1}
+.dice-controls{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.dice-ctrl-grp{display:flex;align-items:center;gap:6px;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:6px 10px}
+.dice-ctrl-grp label{font-size:11px;color:var(--muted);white-space:nowrap}
+.dice-ctrl-val{min-width:24px;text-align:center;font-weight:700;font-size:15px;color:var(--text)}
+.dice-ctrl-btn{width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.roll-btn{width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,rgba(61,255,170,.15),rgba(61,255,170,.05));border:1px solid var(--green-dim);color:var(--green);font-size:17px;font-weight:700;cursor:pointer;letter-spacing:.5px;transition:all .15s;margin-bottom:16px}
+.roll-btn:active{transform:scale(.97);background:rgba(61,255,170,.2)}
+.roll-btn.rolling{animation:shake .4s ease-in-out}
+.dice-result-area{min-height:80px;display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:16px}
+.dice-faces{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.die-face{width:46px;height:46px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;border-radius:8px;background:var(--card2);border:1px solid var(--border);color:var(--text);animation:diePop .35s cubic-bezier(.17,.67,.35,1.4) both}
+.die-face.crit{border-color:var(--green);color:var(--green);background:rgba(61,255,170,.12)}
+.die-face.fumble{border-color:var(--red);color:var(--red);background:rgba(255,77,109,.1)}
+.dice-total{font-size:38px;font-weight:700;color:var(--green);animation:totalPop .4s cubic-bezier(.17,.67,.35,1.4) both;line-height:1}
+.dice-total-label{font-size:11px;color:var(--muted)}
+.dice-hist-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px}
+.dice-hist-row:last-child{border-bottom:none}
+.dice-hist-dice{color:var(--muted);flex:1}
+.dice-hist-total{font-weight:700;color:var(--green);min-width:30px;text-align:right}
+.dice-hist-rolls{color:var(--text);font-size:11px}
+@keyframes shake{0%,100%{transform:translateX(0) rotate(0)}20%{transform:translateX(-5px) rotate(-4deg)}40%{transform:translateX(5px) rotate(4deg)}60%{transform:translateX(-4px) rotate(-2deg)}80%{transform:translateX(3px) rotate(2deg)}}
+@keyframes diePop{0%{transform:scale(0) rotate(-20deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
+@keyframes totalPop{0%{transform:scale(.4);opacity:0}100%{transform:scale(1);opacity:1}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+      <div style="flex:1;min-width:0" id="header-name-wrap">
+        <div class="char-name" id="header-name">⚡ Nyxa M'ehr</div>
+        <div class="char-subtitle" id="header-subtitle">Panthotor · 22 ans · Sorcière · Arts Conducteurs</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0;align-items:center">
+        <span id="save-ind" style="font-size:11px;color:var(--green);opacity:0;transition:opacity .4s;white-space:nowrap">💾 Sauvegardé</span>
+        <button class="edit-btn-hdr" onclick="openCharMgr()" title="Changer de personnage">👥</button>
+        <button class="edit-btn-hdr" id="edit-btn" onclick="toggleEdit()">✏️ Éditer</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- PERSO -->
+    <div class="tab active" id="tab-perso">
+      <div id="eb-perso"></div>
+
+      <div class="card">
+        <div class="card-title">⚡ Points Vitaux</div>
+        <div class="tracker">
+          <div class="tracker-label">🍀 Points de Chance</div>
+          <div class="tracker-controls">
+            <button class="tracker-btn" onclick="change('lp',-1)">−</button>
+            <div class="tracker-display" id="display-lp">3/3</div>
+            <button class="tracker-btn" onclick="change('lp',1)">+</button>
+          </div>
+        </div>
+        <div class="tracker">
+          <div class="tracker-label">✨ Points de Magie</div>
+          <div class="tracker-controls">
+            <button class="tracker-btn" onclick="change('mp',-1)">−</button>
+            <div class="tracker-display" id="display-mp">13/13</div>
+            <button class="tracker-btn" onclick="change('mp',1)">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📊 Caractéristiques</div>
+        <div id="stats-grid"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">⚙️ Attributs Dérivés</div>
+        <div id="derived-attrs"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">👤 Identité</div>
+        <div id="identity"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">💰 Argent</div>
+        <div id="money-grid"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🐾 Capacités Spéciales &amp; Raciales</div>
+        <div id="abilities"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📜 Background</div>
+        <textarea id="bg-notes" oninput="saveBgNotes()"></textarea>
+      </div>
+    </div>
+
+    <!-- SKILLS -->
+    <div class="tab" id="tab-skills">
+      <div id="eb-skills"></div>
+      <div class="card">
+        <div class="card-title">🛡️ Résistances</div>
+        <div id="resistances"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">🎯 Compétences Standard</div>
+        <div id="std-skills"></div>
+        <div id="add-std"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">💼 Compétences Professionnelles</div>
+        <div id="prof-skills"></div>
+        <div id="add-prof"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">❤️ Passions</div>
+        <div id="passions"></div>
+        <div id="add-passion"></div>
+      </div>
+    </div>
+
+    <!-- MAGIE -->
+    <div class="tab" id="tab-magie">
+      <div id="eb-magie"></div>
+      <div class="card">
+        <div class="card-title">✨ Points de Magie</div>
+        <div style="text-align:center;padding:10px 0">
+          <div style="font-size:52px;font-weight:700;color:var(--green)" id="mp-big">13</div>
+          <div style="font-size:12px;color:var(--muted)">/ 13 maximum</div>
+          <div style="display:flex;justify-content:center;gap:20px;margin-top:14px">
+            <button class="tracker-btn" style="width:44px;height:44px;font-size:22px" onclick="change('mp',-1)">−</button>
+            <button class="tracker-btn" style="width:44px;height:44px;font-size:22px" onclick="change('mp',1)">+</button>
+          </div>
+        </div>
+        <div id="mp-dots" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;justify-content:center"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">🔮 Compétences Magiques</div>
+        <div id="magic-skills"></div>
+        <div id="add-magic"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">🌿 Folk Magic</div>
+        <div id="folk-spells"></div>
+        <div id="add-folk"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">⚡ Sorcellerie</div>
+        <div id="sorc-quote"></div>
+        <div id="sorc-spells"></div>
+        <div id="add-sorc"></div>
+      </div>
+    </div>
+
+    <!-- COMBAT -->
+    <div class="tab" id="tab-combat">
+      <div id="eb-combat"></div>
+      <div class="card">
+        <div class="card-title">😮‍💨 Fatigue</div>
+        <div class="fatigue-states" id="fatigue-grid"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">💀 Points de Vie par Localisation</div>
+        <div id="hit-locs"></div>
+        <div id="add-hitlec"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">⚔️ Style de Combat</div>
+        <div id="combat-styles"></div>
+        <div id="add-cs"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">🗡️ Armes</div>
+        <div id="weapons"></div>
+        <div id="add-weapon"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">🎒 Équipement</div>
+        <div id="equipment"></div>
+      </div>
+    </div>
+
+    <!-- DICE ROLLER -->
+    <div class="tab" id="tab-dice">
+      <div class="card">
+        <div class="card-title">🎲 Type de dé</div>
+        <div class="dice-type-grid" id="dice-type-grid"></div>
+        <div class="dice-controls">
+          <div class="dice-ctrl-grp">
+            <label>Nombre</label>
+            <button class="dice-ctrl-btn" onclick="adjDice('count',-1)">−</button>
+            <span class="dice-ctrl-val" id="dice-count-val">1</span>
+            <button class="dice-ctrl-btn" onclick="adjDice('count',1)">+</button>
+          </div>
+          <div class="dice-ctrl-grp">
+            <label>Modificateur</label>
+            <button class="dice-ctrl-btn" onclick="adjDice('mod',-1)">−</button>
+            <span class="dice-ctrl-val" id="dice-mod-val">+0</span>
+            <button class="dice-ctrl-btn" onclick="adjDice('mod',1)">+</button>
+          </div>
+        </div>
+        <button class="roll-btn" id="roll-btn" onclick="rollDice()">🎲 Lancer !</button>
+        <div class="dice-result-area" id="dice-result-area">
+          <div style="color:var(--muted);font-size:13px">Choisis un dé et lance !</div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div class="card-title" style="margin:0">📜 Historique</div>
+          <button onclick="clearDiceHistory()" style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;padding:0">Effacer</button>
+        </div>
+        <div id="dice-history"><div style="color:var(--muted);font-size:12px">Aucun lancer</div></div>
+      </div>
+    </div>
+
+    <!-- JOURNAL -->
+    <div class="tab" id="tab-journal">
+      <div id="journal-pages"></div>
+      <div class="card" style="margin-top:4px">
+        <div class="card-title">💾 Export Fiche</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Sauvegarde ou partage ta fiche personnage.</div>
+        <div style="display:flex;gap:8px;flex-direction:column">
+          <button onclick="exportJSON()" style="padding:11px;background:rgba(61,255,170,.08);border:1px solid var(--green-dim);border-radius:8px;color:var(--green);font-size:13px;cursor:pointer;font-weight:600;text-align:left">📦 Exporter en JSON <span style="font-size:11px;font-weight:400;color:var(--muted)">— données complètes, re-importable</span></button>
+          <button onclick="exportText()" style="padding:11px;background:rgba(255,209,102,.06);border:1px solid rgba(255,209,102,.25);border-radius:8px;color:var(--yellow);font-size:13px;cursor:pointer;font-weight:600;text-align:left">📄 Exporter en texte <span style="font-size:11px;font-weight:400;color:var(--muted)">— fiche lisible à partager</span></button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- CHAR MANAGER OVERLAY -->
+  <div id="char-mgr" style="display:none;position:fixed;inset:0;z-index:200;flex-direction:column;background:var(--bg);max-width:480px;left:50%;transform:translateX(-50%)">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:var(--card)">
+      <div style="font-size:18px;font-weight:700;color:var(--green)">👥 Personnages</div>
+      <button onclick="closeCharMgr()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1">✕</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:16px" id="char-mgr-list"></div>
+    <div style="padding:16px;border-top:1px solid var(--border);background:var(--card)">
+      <button class="add-btn" onclick="createChar()">+ Nouveau personnage vierge</button>
+      <button class="add-btn" style="margin-top:8px;border-color:rgba(255,209,102,.3);color:var(--yellow)" onclick="document.getElementById('import-file').click()">📥 Importer depuis JSON</button>
+      <input type="file" id="import-file" accept=".json" style="display:none" onchange="doImportChar(this)">
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <button class="nav-btn active" onclick="showTab('perso')" id="nav-perso"><span class="nav-icon">👤</span><span class="nav-label">Perso</span></button>
+    <button class="nav-btn" onclick="showTab('skills')" id="nav-skills"><span class="nav-icon">🎯</span><span class="nav-label">Skills</span></button>
+    <button class="nav-btn" onclick="showTab('magie')" id="nav-magie"><span class="nav-icon">⚡</span><span class="nav-label">Magie</span></button>
+    <button class="nav-btn" onclick="showTab('combat')" id="nav-combat"><span class="nav-icon">⚔️</span><span class="nav-label">Combat</span></button>
+    <button class="nav-btn" onclick="showTab('dice')" id="nav-dice"><span class="nav-icon">🎲</span><span class="nav-label">Dés</span></button>
+    <button class="nav-btn" onclick="showTab('journal')" id="nav-journal"><span class="nav-icon">📖</span><span class="nav-label">Journal</span></button>
+  </nav>
+</div>
+
+<script>
+// ══ EDIT MODE ══
+let editMode = false;
+function toggleEdit(){
+  editMode=!editMode;
+  const b=document.getElementById('edit-btn');
+  b.classList.toggle('on',editMode);
+  b.textContent=editMode?'✅ Terminer':'✏️ Éditer';
+  renderAll();
+}
+function eb(){return editMode?'<div class="edit-banner">✏️ Mode édition actif — modifiez les valeurs directement</div>':'';}
+
+// ══ HELPERS ══
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function safeN(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\\'");}
+
+// ══ DEFAULT STATE (personnage vierge) ══
+const D = {
+  charName:'Nouveau Personnage',
+  charSubtitle:'Race · Âge · Carrière',
+  stats:{STR:10,CON:10,SIZ:10,DEX:10,INT:10,POW:10,CHA:10},
+  derivedAttrs:[
+    {name:'Action Points',value:'2'},{name:'Initiative',value:'10'},
+    {name:'Dmg Modifier',value:'+0'},{name:'Healing Rate',value:'2'},
+    {name:'Movement',value:'6m'},{name:'MP max',value:'10'},
+  ],
+  identity:[
+    {key:'Nom complet',val:''},{key:'Race',val:''},
+    {key:'Genre / Âge',val:''},{key:'Carrière',val:''},
+    {key:'Corpulence',val:''},{key:'Culture',val:''},
+    {key:'Classe sociale',val:''},{key:'École magique',val:''},
+  ],
+  money:{po:0,pa:0,rc:0},
+  abilities:[],abilitiesDesc:'',
+  passions:[],
+  stdSkills:[
+    {name:'Athletics',formula:'STR+DEX',trained:false},{name:'Boating',formula:'STR+CON',trained:false},
+    {name:'Conceal',formula:'DEX+POW',trained:false},{name:'Customs',formula:'INTx2',trained:false},
+    {name:'Dance',formula:'DEX+CHA',trained:false},{name:'Deceit',formula:'INT+CHA',trained:false},
+    {name:'Drive',formula:'DEX+POW',trained:false},{name:'First Aid',formula:'INT+DEX',trained:false},
+    {name:'Influence',formula:'CHAx2',trained:false},{name:'Insight',formula:'INT+POW',trained:false},
+    {name:'Locale',formula:'INTx2',trained:false},{name:'Perception',formula:'INT+POW',trained:false},
+    {name:'Ride',formula:'DEX+POW',trained:false},{name:'Sing',formula:'CHA+POW',trained:false},
+    {name:'Stealth',formula:'DEX+INT',trained:false},{name:'Swim',formula:'STR+CON',trained:false},
+    {name:'Unarmed',formula:'STR+DEX',trained:false},
+  ],
+  profSkills:[],magicSkills:[],combatStyles:[],
+  folkSpells:[],sorcSpells:[],sorcSchoolQuote:'',
+  weapons:[],equipment:[],
+  enc:{current:'0',encumbered:'0',overloaded:'0'},
+  lp:{current:3,max:3},mp:{current:10,max:10},
+  fatigue:'Fresh',
+  hitLocations:[
+    {name:'Tête',range:'19-20',maxHP:4,currentHP:4},
+    {name:'Bras Gauche',range:'16-18',maxHP:3,currentHP:3},
+    {name:'Bras Droit',range:'13-15',maxHP:3,currentHP:3},
+    {name:'Poitrine',range:'10-12',maxHP:5,currentHP:5},
+    {name:'Abdomen',range:'7-9',maxHP:4,currentHP:4},
+    {name:'Jambe Gauche',range:'4-6',maxHP:4,currentHP:4},
+    {name:'Jambe Droite',range:'1-3',maxHP:4,currentHP:4},
+  ],
+  skillMods:{},quests:[],
+  bgNotes:'',sessionNotes:'',generalNotes:'',skillSuccesses:{},
+};
+
+// ══ CHAR LIST ══
+function getCharList(){return JSON.parse(localStorage.getItem('mythras_charlist')||'[]');}
+function setCharList(l){localStorage.setItem('mythras_charlist',JSON.stringify(l));}
+
+// Migration : nyxa_charlist / nyxa_v1 → mythras_*
+if(!localStorage.getItem('mythras_charlist')){
+  if(localStorage.getItem('nyxa_charlist')){
+    // Migrer depuis format nyxa_*
+    const oldList=JSON.parse(localStorage.getItem('nyxa_charlist'));
+    setCharList(oldList);
+    oldList.forEach(c=>{
+      const d=localStorage.getItem('nyxa_char_'+c.id);
+      if(d) localStorage.setItem('mythras_char_'+c.id,d);
+    });
+    const oa=localStorage.getItem('nyxa_active_char');
+    if(oa) localStorage.setItem('mythras_active_char',oa);
+  } else if(localStorage.getItem('nyxa_v1')){
+    // Migrer depuis très ancien format
+    const old=localStorage.getItem('nyxa_v1');
+    const id='default';
+    localStorage.setItem('mythras_char_'+id,old);
+    const parsed=JSON.parse(old);
+    setCharList([{id,name:parsed.charName||'Personnage',subtitle:parsed.charSubtitle||''}]);
+    localStorage.setItem('mythras_active_char',id);
+  } else {
+    // Nouvel utilisateur — personnage vierge
+    const id='char_'+Date.now();
+    localStorage.setItem('mythras_char_'+id,JSON.stringify(D));
+    setCharList([{id,name:D.charName,subtitle:D.charSubtitle}]);
+    localStorage.setItem('mythras_active_char',id);
+  }
+}
+
+let activeCharId = localStorage.getItem('mythras_active_char') || getCharList()[0]?.id;
+
+// ══ STATE ══
+function migrateState(S){
+  ['charName','charSubtitle','stats','derivedAttrs','identity','money','abilities','abilitiesDesc',
+   'passions','stdSkills','profSkills','magicSkills','combatStyles','folkSpells','sorcSpells',
+   'sorcSchoolQuote','weapons','equipment','enc'].forEach(k=>{
+    if(S[k]===undefined) S[k]=JSON.parse(JSON.stringify(D[k]));
+  });
+  if(!S.skillMods) S.skillMods=JSON.parse(JSON.stringify(D.skillMods));
+  Object.keys(D.skillMods).forEach(k=>{ if(S.skillMods[k]===undefined) S.skillMods[k]=D.skillMods[k]; });
+  S.hitLocations=S.hitLocations||D.hitLocations;
+  if(!S.skillSuccesses) S.skillSuccesses={};
+  // Migration vers système de pages
+  if(!S.pages){
+    S.pages=[];
+    const d=new Date().toLocaleDateString('fr-FR');
+    (S.quests||[]).forEach(q=>{
+      S.pages.push({id:'p_'+Date.now()+'_'+Math.random().toString(36).slice(2,5),
+        title:q.title||'Quête',
+        content:[q.desc,q.meta].filter(Boolean).join('\n\n'),
+        drawing:null,date:d,archived:q.status!=='active'});
+    });
+    if(S.sessionNotes?.trim()) S.pages.push({id:'p_sn_'+Date.now(),title:'Notes de Session',content:S.sessionNotes,drawing:null,date:d,archived:false});
+    if(S.generalNotes?.trim()) S.pages.push({id:'p_gn_'+Date.now(),title:'PNJ & Lieux',content:S.generalNotes,drawing:null,date:d,archived:false});
+  }
+  return S;
+}
+
+function loadStateForChar(id){
+  const raw=localStorage.getItem('mythras_char_'+id);
+  return migrateState(raw?JSON.parse(raw):JSON.parse(JSON.stringify(D)));
+}
+
+let S = loadStateForChar(activeCharId);
+
+function save(){
+  try{
+    localStorage.setItem('mythras_char_'+activeCharId, JSON.stringify(S));
+    const list=getCharList();
+    const idx=list.findIndex(c=>c.id===activeCharId);
+    if(idx>=0){list[idx].name=S.charName;list[idx].subtitle=S.charSubtitle;setCharList(list);}
+    const el=document.getElementById('save-ind');
+    if(el){el.style.opacity='1';el.style.color='var(--green)';clearTimeout(el._t);el._t=setTimeout(()=>el.style.opacity='0',1500);}
+  }catch(e){
+    const el=document.getElementById('save-ind');
+    if(el){el.textContent='⚠️ Stockage plein';el.style.opacity='1';el.style.color='var(--red)';}
+    console.error('Save failed:',e);
+  }
+}
+
+// ══ CALC ══
+const RESIST=[{name:'Brawn',formula:'STR+SIZ'},{name:'Endurance',formula:'CONx2'},{name:'Evade',formula:'DEXx2'},{name:'Willpower',formula:'POWx2'}];
+
+function calcBase(formula){
+  const st=S.stats;
+  const f=formula.replace(/([A-Z]{2,3})/g,m=>st[m]!==undefined?st[m]:0).replace(/[xX]/g,'*');
+  try{return Function('"use strict";return('+f+')')();}catch(e){return 0;}
+}
+
+// ══ RENDER ALL ══
+function renderAll(){
+  renderHeader(); renderTrackers(); renderMPDots();
+  ['perso','skills','magie','combat'].forEach(t=>{const e=document.getElementById('eb-'+t);if(e)e.innerHTML=eb();});
+  renderStats(); renderDerivedAttrs(); renderIdentity(); renderMoney(); renderAbilities();
+  renderResistances(); renderStdSkills(); renderProfSkills(); renderMagicSkills(); renderCombatStyles();
+  renderPassions(); renderFolkSpells(); renderSorcSpells();
+  renderFatigue(); renderHitLocs(); renderWeapons(); renderEquipment(); renderJournal(); loadBgNotes();
+  initDiceTab();
+}
+
+function renderHeader(){
+  const n=document.getElementById('header-name');
+  const s=document.getElementById('header-subtitle');
+  if(!n)return;
+  if(editMode){
+    n.innerHTML=`<input class="e-input w100" type="text" value="${esc(S.charName)}" oninput="S.charName=this.value;save()" style="font-size:20px;font-weight:700;color:var(--green)">`;
+    s.innerHTML=`<input class="e-input w100" type="text" value="${esc(S.charSubtitle)}" oninput="S.charSubtitle=this.value;save()" style="font-size:12px;color:var(--muted);margin-top:2px">`;
+  } else {
+    n.textContent='⚡ '+S.charName;
+    s.textContent=S.charSubtitle;
+    document.title=S.charName+' · Mythras';
+  }
+}
+
+function renderTrackers(){
+  const lp=document.getElementById('display-lp');
+  const mp=document.getElementById('display-mp');
+  const mpb=document.getElementById('mp-big');
+  if(editMode){
+    lp.innerHTML=`${S.lp.current}/<input class="e-input num" type="number" min="1" value="${S.lp.max}" oninput="S.lp.max=parseInt(this.value)||1;save()">`;
+    mp.innerHTML=`${S.mp.current}/<input class="e-input num" type="number" min="1" value="${S.mp.max}" oninput="S.mp.max=parseInt(this.value)||1;save();renderMPDots()">`;
+  } else {
+    lp.textContent=S.lp.current+'/'+S.lp.max;
+    mp.textContent=S.mp.current+'/'+S.mp.max;
+  }
+  if(mpb) mpb.textContent=S.mp.current;
+}
+
+function renderMPDots(){
+  const c=document.getElementById('mp-dots');if(!c)return;c.innerHTML='';
+  for(let i=0;i<S.mp.max;i++){
+    const d=document.createElement('div');const active=i<S.mp.current;
+    d.style.cssText=`width:20px;height:20px;border-radius:50%;border:2px solid ${active?'var(--green)':'var(--border)'};background:${active?'rgba(61,255,170,.18)':'transparent'};cursor:pointer;transition:all .2s`;
+    d.onclick=()=>{S.mp.current=i+1;save();renderTrackers();renderMPDots();};c.appendChild(d);
+  }
+}
+
+function renderStats(){
+  const c=document.getElementById('stats-grid');if(!c)return;
+  const keys=['STR','CON','SIZ','DEX','INT','POW','CHA'];
+  const green=['INT','POW'];
+  c.className='stats-grid';
+  c.innerHTML=keys.map(k=>{
+    const g=green.includes(k);
+    return `<div class="stat-box"><div class="stat-label">${k}</div>${
+      editMode
+        ?`<input class="e-stat${g?' green':''}" type="number" min="1" max="99" value="${S.stats[k]}" oninput="S.stats['${k}']=parseInt(this.value)||0;save();renderStats();renderSkillSections()">`
+        :`<div class="stat-value${g?' green':''}">${S.stats[k]}</div>`
+    }</div>`;
+  }).join('')+`<div class="stat-box"><div class="stat-label">EXP mod</div><div class="stat-value" style="font-size:16px">+0</div></div>`;
+}
+
+function renderDerivedAttrs(){
+  const c=document.getElementById('derived-attrs');if(!c)return;
+  c.className='attr-grid';
+  c.innerHTML=S.derivedAttrs.map((a,i)=>`
+    <div class="attr-item">
+      <div class="attr-name">${editMode?`<input class="e-input" type="text" value="${esc(a.name)}" oninput="S.derivedAttrs[${i}].name=this.value;save()" style="color:var(--muted);font-size:12px">`:esc(a.name)}</div>
+      <div class="attr-value">${editMode?`<input class="e-input num" type="text" value="${esc(a.value)}" oninput="S.derivedAttrs[${i}].value=this.value;save()" style="color:var(--green);font-size:16px;font-weight:700">`:esc(a.value)}</div>
+    </div>`).join('');
+}
+
+function renderIdentity(){
+  const c=document.getElementById('identity');if(!c)return;
+  c.innerHTML=S.identity.map((r,i)=>`
+    <div class="identity-row">
+      <div class="identity-key">${editMode?`<input class="e-input sm" type="text" value="${esc(r.key)}" oninput="S.identity[${i}].key=this.value;save()" style="color:var(--muted)">`:esc(r.key)}</div>
+      <div class="identity-val">${editMode?`<input class="e-input w100" type="text" value="${esc(r.val)}" oninput="S.identity[${i}].val=this.value;save()">`:esc(r.val)}</div>
+      ${editMode?`<button class="del-btn" onclick="S.identity.splice(${i},1);save();renderIdentity()">×</button>`:''}
+    </div>`).join('');
+  if(editMode) c.innerHTML+=`<button class="add-btn" style="margin-top:8px" onclick="S.identity.push({key:'Champ',val:''});save();renderIdentity()">+ Ajouter un champ</button>`;
+}
+
+function renderMoney(){
+  const c=document.getElementById('money-grid');if(!c)return;
+  c.className='';
+  c.innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">
+      <div class="money-box"><div class="money-label">🪙 Or</div><div class="money-value">${S.money.po}</div></div>
+      <div class="money-box"><div class="money-label">🥈 Argent</div><div class="money-value">${S.money.pa}</div></div>
+      <div class="money-box"><div class="money-label">🟤 Cuivre</div><div class="money-value">${S.money.rc}</div></div>
+    </div>
+    <div style="background:var(--card2);border-radius:8px;padding:10px">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px">Transaction</div>
+      <div style="display:flex;gap:6px;margin-bottom:10px">
+        ${['t-po','t-pa','t-rc'].map((id,i)=>`
+          <div style="flex:1;text-align:center">
+            <div style="font-size:10px;color:var(--muted);margin-bottom:4px">${['Or','Argent','Cuivre'][i]}</div>
+            <input id="${id}" type="number" min="0" value="0" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px;font-size:18px;text-align:center;outline:none;-moz-appearance:textfield">
+          </div>`).join('')}
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="doMoney(1)" style="flex:1;padding:10px;background:rgba(61,255,170,.1);border:1px solid var(--green-dim);border-radius:8px;color:var(--green);font-size:14px;font-weight:700;cursor:pointer">+ Recevoir</button>
+        <button onclick="doMoney(-1)" style="flex:1;padding:10px;background:rgba(255,77,109,.07);border:1px solid rgba(255,77,109,.3);border-radius:8px;color:var(--red);font-size:14px;font-weight:700;cursor:pointer">− Dépenser</button>
+      </div>
+    </div>
+    ${editMode?`<div style="margin-top:10px;padding:10px;background:rgba(255,209,102,.06);border:1px solid rgba(255,209,102,.2);border-radius:8px">
+      <div style="font-size:10px;color:var(--yellow);margin-bottom:8px">Modifier directement</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        ${[{k:'po',l:'Or'},{k:'pa',l:'Argent'},{k:'rc',l:'Cuivre'}].map(f=>`
+          <div class="money-box">
+            <div class="money-label">${f.l}</div>
+            <input class="e-input" type="number" min="0" value="${S.money[f.k]}" oninput="S.money['${f.k}']=parseInt(this.value)||0;save();renderMoney()" style="font-size:18px;font-weight:700;color:var(--yellow);text-align:center;width:100%">
+          </div>`).join('')}
+      </div>
+    </div>`:''}
+  `;
+}
+
+function doMoney(sign){
+  const po=parseInt(document.getElementById('t-po').value)||0;
+  const pa=parseInt(document.getElementById('t-pa').value)||0;
+  const rc=parseInt(document.getElementById('t-rc').value)||0;
+  applyMoney(sign*po, sign*pa, sign*rc);
+  document.getElementById('t-po').value=0;
+  document.getElementById('t-pa').value=0;
+  document.getElementById('t-rc').value=0;
+}
+
+function applyMoney(po,pa,rc){
+  let rRC=S.money.rc+rc, rPA=S.money.pa+pa, rPO=S.money.po+po;
+  // cascade RC
+  if(rRC>=100){rPA+=Math.floor(rRC/100);rRC=rRC%100;}
+  else if(rRC<0){const b=Math.ceil(-rRC/100);rPA-=b;rRC+=b*100;}
+  // cascade PA
+  if(rPA>=100){rPO+=Math.floor(rPA/100);rPA=rPA%100;}
+  else if(rPA<0){const b=Math.ceil(-rPA/100);rPO-=b;rPA+=b*100;}
+  S.money={po:rPO,pa:rPA,rc:rRC};
+  save();renderMoney();
+}
+
+function renderAbilities(){
+  const c=document.getElementById('abilities');if(!c)return;
+  const tags=S.abilities.map((a,i)=>editMode
+    ?`<span style="display:inline-flex;align-items:center;gap:4px;margin:3px"><input class="e-input" type="text" value="${esc(a)}" oninput="S.abilities[${i}]=this.value;save()" style="width:110px"><button class="del-btn" onclick="S.abilities.splice(${i},1);save();renderAbilities()">×</button></span>`
+    :`<span class="ability-tag">${esc(a)}</span>`).join('');
+  const addBtn=editMode?`<button class="add-btn" style="margin-top:6px" onclick="S.abilities.push('Capacité');save();renderAbilities()">+ Ajouter</button>`:'';
+  const desc=editMode
+    ?`<textarea class="e-ta" style="margin-top:8px;min-height:60px" oninput="S.abilitiesDesc=this.value;save()">${esc(S.abilitiesDesc)}</textarea>`
+    :`<div style="font-size:12px;color:var(--muted);line-height:1.5;margin-top:8px">${esc(S.abilitiesDesc)}</div>`;
+  c.innerHTML=`<div style="margin-bottom:4px">${tags}${addBtn}</div>${desc}`;
+}
+
+// ══ SKILL ROW ══
+function mkSkillRow(skill,trained,showDot,type,idx){
+  const base=calcBase(skill.formula);
+  const mod=(S.skillMods[skill.name]||0);
+  const total=base+mod;
+  const modStr=(mod>=0?'+':'')+mod;
+  const n=safeN(skill.name);
+  const dot=showDot?`<div class="skill-dot ${trained?'':'no'}"></div>`:`<div style="width:14px;flex-shrink:0"></div>`;
+  const succ=S.skillSuccesses[skill.name]||0;
+  const succBtn=`<div style="display:flex;align-items:center;gap:2px;flex-shrink:0">
+    <button class="succ-btn${succ>0?' has':''}" onclick="incSuccess('${n}',-1)" style="padding:0 4px" title="−1">−</button>
+    <span class="succ-btn${succ>0?' has':''}" style="min-width:20px;cursor:default">${succ>0?succ:'·'}</span>
+    <button class="succ-btn${succ>0?' has':''}" onclick="incSuccess('${n}',1)" style="padding:0 4px" title="+1">+</button>
+  </div>`;
+  if(editMode&&type!==undefined&&idx!==undefined){
+    return `<div class="skill-row">
+      ${dot}
+      <div class="skill-name-col">
+        <input class="e-input w100" type="text" value="${esc(skill.name)}" oninput="renameSkill('${type}',${idx},this.value)">
+        <input class="e-input w100" type="text" value="${esc(skill.formula)}" oninput="S.${type}Skills[${idx}].formula=this.value;save();renderSkillSections()" style="font-size:10px;color:var(--muted);margin-top:2px">
+      </div>
+      <div class="skill-mod-ctrl">
+        <button class="skill-mod-btn" onclick="adjMod('${n}',-1)">−</button>
+        <span class="skill-mod-val">${modStr}</span>
+        <button class="skill-mod-btn" onclick="adjMod('${n}',1)">+</button>
+      </div>
+      <div class="skill-pct">${total}%</div>
+      <button class="del-btn" onclick="delSkill('${type}',${idx})">×</button>
+    </div>`;
+  }
+  return `<div class="skill-row">
+    ${dot}
+    <div class="skill-name-col">
+      <div class="skill-name">${skill.name}</div>
+      <div class="skill-base-formula">${skill.formula} = ${base}</div>
+    </div>
+    ${succBtn}
+    <div class="skill-mod-ctrl">
+      <button class="skill-mod-btn" onclick="adjMod('${n}',-1)">−</button>
+      <span class="skill-mod-val">${modStr}</span>
+      <button class="skill-mod-btn" onclick="adjMod('${n}',1)">+</button>
+    </div>
+    <div class="skill-pct">${total}%</div>
+  </div>`;
+}
+
+function renderResistances(){
+  const c=document.getElementById('resistances');if(!c)return;
+  c.innerHTML=RESIST.map(r=>{
+    const base=calcBase(r.formula),mod=(S.skillMods[r.name]||0),total=base+mod;
+    const modStr=(mod>=0?'+':'')+mod,n=safeN(r.name),isW=r.name==='Willpower';
+    return `<div class="skill-row">
+      <div style="width:14px;flex-shrink:0"></div>
+      <div class="skill-name-col">
+        <div class="skill-name" style="font-weight:700;${isW?'color:var(--green)':''}">${r.name}</div>
+        <div class="skill-base-formula">${r.formula} = ${base}</div>
+      </div>
+      <div class="skill-mod-ctrl">
+        <button class="skill-mod-btn" onclick="adjMod('${n}',-1)">−</button>
+        <span class="skill-mod-val">${modStr}</span>
+        <button class="skill-mod-btn" onclick="adjMod('${n}',1)">+</button>
+      </div>
+      <div class="skill-pct" style="${isW?'color:var(--green)':''}">${total}%</div>
+    </div>`;
+  }).join('');
+}
+
+function renderStdSkills(){
+  const c=document.getElementById('std-skills');if(!c)return;
+  c.innerHTML=S.stdSkills.map((s,i)=>mkSkillRow(s,s.trained,true,'std',i)).join('');
+  const a=document.getElementById('add-std');
+  if(a) a.innerHTML=editMode?`<button class="add-btn" onclick="addSkill('std')">+ Ajouter</button>`:'';
+}
+
+function renderProfSkills(){
+  const c=document.getElementById('prof-skills');if(!c)return;
+  c.innerHTML=S.profSkills.map((s,i)=>mkSkillRow(s,true,true,'prof',i)).join('');
+  const a=document.getElementById('add-prof');
+  if(a) a.innerHTML=editMode?`<button class="add-btn" onclick="addSkill('prof')">+ Ajouter</button>`:'';
+}
+
+function renderMagicSkills(){
+  const c=document.getElementById('magic-skills');if(!c)return;
+  c.innerHTML=S.magicSkills.map((s,i)=>mkSkillRow(s,true,true,'magic',i)).join('');
+  const a=document.getElementById('add-magic');
+  if(a) a.innerHTML=editMode?`<button class="add-btn" onclick="addSkill('magic')">+ Ajouter</button>`:'';
+}
+
+function renderCombatStyles(){
+  const c=document.getElementById('combat-styles');if(!c)return;
+  c.innerHTML=S.combatStyles.map((cs,i)=>{
+    const base=calcBase(cs.formula),mod=(S.skillMods[cs.name]||0),total=base+mod;
+    const modStr=(mod>=0?'+':'')+mod,n=safeN(cs.name);
+    if(editMode){return `<div class="weapon-card">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+        <input class="e-input w100" type="text" value="${esc(cs.name)}" oninput="renameCS(${i},this.value)" style="font-size:14px;font-weight:700">
+        <button class="del-btn" onclick="S.combatStyles.splice(${i},1);save();renderCombatStyles()">×</button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        <span style="font-size:11px;color:var(--muted)">Formule:</span><input class="e-input sm" type="text" value="${esc(cs.formula)}" oninput="S.combatStyles[${i}].formula=this.value;save();renderCombatStyles()">
+        <span style="font-size:11px;color:var(--muted)">Trait:</span><input class="e-input" type="text" value="${esc(cs.trait)}" oninput="S.combatStyles[${i}].trait=this.value;save()" style="width:80px">
+        <span style="font-size:11px;color:var(--muted)">Armes:</span><input class="e-input w100" type="text" value="${esc(cs.weapons)}" oninput="S.combatStyles[${i}].weapons=this.value;save()">
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;padding-top:8px;border-top:1px solid var(--border)">
+        <div style="font-size:11px;color:var(--muted);flex:1">${cs.formula} = ${base}</div>
+        <div class="skill-mod-ctrl">
+          <button class="skill-mod-btn" onclick="adjMod('${n}',-1)">−</button>
+          <span class="skill-mod-val">${modStr}</span>
+          <button class="skill-mod-btn" onclick="adjMod('${n}',1)">+</button>
+        </div>
+        <div class="skill-pct">${total}%</div>
+      </div>
+    </div>`;}
+    return `<div class="weapon-card">
+      <div class="weapon-name">${cs.name}</div>
+      <div class="weapon-stats">
+        <div class="weapon-stat">Armes: <span>${cs.weapons}</span></div>
+        <div class="weapon-stat">Trait: <span>${cs.trait}</span></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:8px;border-top:1px solid var(--border)">
+        <div style="font-size:11px;color:var(--muted);flex:1">${cs.formula} = ${base}</div>
+        <div class="skill-mod-ctrl">
+          <button class="skill-mod-btn" onclick="adjMod('${n}',-1)">−</button>
+          <span class="skill-mod-val">${modStr}</span>
+          <button class="skill-mod-btn" onclick="adjMod('${n}',1)">+</button>
+        </div>
+        <div class="skill-pct">${total}%</div>
+      </div>
+    </div>`;
+  }).join('');
+  const a=document.getElementById('add-cs');
+  if(a) a.innerHTML=editMode?`<button class="add-btn" onclick="S.combatStyles.push({name:'Nouveau style',formula:'STR+DEX',trait:'',weapons:''});save();renderCombatStyles()">+ Ajouter un style</button>`:'';
+}
+
+function renderPassions(){
+  const c=document.getElementById('passions');if(!c)return;
+  if(editMode){
+    c.innerHTML=S.passions.map((p,i)=>`
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <input class="e-input w100" type="text" value="${esc(p.name)}" oninput="S.passions[${i}].name=this.value;save()">
+        <input class="e-input num" type="number" min="0" max="100" value="${p.pct}" oninput="S.passions[${i}].pct=parseInt(this.value)||0;save()">
+        <span style="font-size:11px;color:var(--muted)">%</span>
+        <button class="del-btn" onclick="S.passions.splice(${i},1);save();renderPassions()">×</button>
+      </div>`).join('');
+  } else {
+    c.innerHTML=S.passions.map(p=>`
+      <div class="passion-row">
+        <div class="passion-header"><span>${esc(p.name)}</span><span class="passion-pct">${p.pct}%</span></div>
+        <div class="passion-bar-bg"><div class="passion-bar-fill" style="width:${Math.min(100,p.pct)}%"></div></div>
+      </div>`).join('');
+  }
+  const a=document.getElementById('add-passion');
+  if(a) a.innerHTML=editMode?`<button class="add-btn" onclick="S.passions.push({name:'Nouvelle passion',pct:50});save();renderPassions()">+ Ajouter</button>`:'';
+}
+
+function renderFolkSpells(){
+  const c=document.getElementById('folk-spells');if(!c)return;
+  if(editMode){
+    c.innerHTML=S.folkSpells.map((s,i)=>`
+      <div class="spell-card folk open" style="cursor:default">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+          <input class="e-input w100" type="text" value="${esc(s.name)}" oninput="S.folkSpells[${i}].name=this.value;save()" style="font-size:14px;font-weight:700">
+          <input class="e-input sm" type="text" value="${esc(s.cost)}" oninput="S.folkSpells[${i}].cost=this.value;save()">
+          <button class="del-btn" onclick="S.folkSpells.splice(${i},1);save();renderFolkSpells()">×</button>
+        </div>
+        <textarea class="e-ta" style="min-height:50px;margin-bottom:6px" oninput="S.folkSpells[${i}].desc=this.value;save()">${esc(s.desc)}</textarea>
+        <textarea class="e-ta" style="min-height:40px" oninput="S.folkSpells[${i}].notes=this.value;save()">${esc(s.notes)}</textarea>
+      </div>`).join('');
+  } else {
+    c.innerHTML=S.folkSpells.map(s=>`
+      <div class="spell-card folk" onclick="this.classList.toggle('open')">
+        <div class="spell-header"><div class="spell-name">${esc(s.name)}</div><div class="spell-cost folk">${esc(s.cost)}</div></div>
+        <div class="spell-detail"><div class="spell-desc">${esc(s.desc)}</div><div class="spell-notes">🌿 ${esc(s.notes)}</div></div>
+      </div>`).join('');
+  }
+  const a=document.getElementById('add-folk');
+  if(a) a.innerHTML=editMode?`<button class="add-btn" onclick="S.folkSpells.push({name:'Nouveau sort',cost:'1 MP',desc:'',notes:''});save();renderFolkSpells()">+ Ajouter</button>`:'';
+}
+
+function renderSorcSpells(){
+  const c=document.getElementById('sorc-spells'),q=document.getElementById('sorc-quote');if(!c)return;
+  if(q) q.innerHTML=editMode
+    ?`<textarea class="e-ta" style="margin-bottom:10px;min-height:50px" oninput="S.sorcSchoolQuote=this.value;save()">${esc(S.sorcSchoolQuote)}</textarea>`
+    :`<div class="school-quote">${esc(S.sorcSchoolQuote)}</div>`;
+  if(editMode){
+    c.innerHTML=S.sorcSpells.map((s,i)=>`
+      <div class="spell-card open" style="cursor:default">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+          <input class="e-input w100" type="text" value="${esc(s.name)}" oninput="S.sorcSpells[${i}].name=this.value;save()" style="font-size:14px;font-weight:700">
+          <input class="e-input sm" type="text" value="${esc(s.cost)}" oninput="S.sorcSpells[${i}].cost=this.value;save()">
+          <button class="del-btn" onclick="S.sorcSpells.splice(${i},1);save();renderSorcSpells()">×</button>
+        </div>
+        <textarea class="e-ta" style="min-height:50px;margin-bottom:6px" oninput="S.sorcSpells[${i}].desc=this.value;save()">${esc(s.desc)}</textarea>
+        <textarea class="e-ta" style="min-height:40px" oninput="S.sorcSpells[${i}].notes=this.value;save()">${esc(s.notes)}</textarea>
+      </div>`).join('');
+  } else {
+    c.innerHTML=S.sorcSpells.map(s=>`
+      <div class="spell-card" onclick="this.classList.toggle('open')">
+        <div class="spell-header"><div class="spell-name">${esc(s.name)}</div><div class="spell-cost">${esc(s.cost)}</div></div>
+        <div class="spell-detail"><div class="spell-desc">${esc(s.desc)}</div><div class="spell-notes">⚡ ${esc(s.notes)}</div></div>
+      </div>`).join('');
+  }
+  const a=document.getElementById('add-sorc');
+  if(a) a.innerHTML=editMode?`<button class="add-btn" onclick="S.sorcSpells.push({name:'Nouveau sort',cost:'1+ MP',desc:'',notes:''});save();renderSorcSpells()">+ Ajouter</button>`:'';
+}
+
+function renderFatigue(){
+  const states=[
+    {name:'Fresh',effect:'Normal',d:false},{name:'Winded',effect:'Hard',d:false},
+    {name:'Tired',effect:'Hard · −1m',d:false},{name:'Wearied',effect:'Formidable · −2m',d:false},
+    {name:'Exhausted',effect:'Formidable · −3m',d:true},{name:'Debilitated',effect:'Herculean · −6m',d:true},
+    {name:'Incapacitated',effect:'Aucune activité',d:true},{name:'Semi-Conscious',effect:'Aucune activité',d:true},
+    {name:'Comatose',effect:'Aucune activité',d:true},{name:'Dead',effect:'☠️',d:true},
+  ];
+  const c=document.getElementById('fatigue-grid');if(!c)return;
+  c.innerHTML=states.map(f=>`
+    <div class="fatigue-state ${f.d?'danger':''} ${S.fatigue===f.name?'active':''}" onclick="setFatigue('${f.name}')">
+      <div class="fatigue-name">${f.name}</div>
+      <div class="fatigue-effect">${f.effect}</div>
+    </div>`).join('');
+}
+
+function renderHitLocs(){
+  const c=document.getElementById('hit-locs');if(!c)return;
+  c.innerHTML=S.hitLocations.map((loc,i)=>{
+    const ratio=loc.maxHP>0?loc.currentHP/loc.maxHP:0;
+    const cls=loc.currentHP<=0?'critical':ratio<=0.5?'damaged':'';
+    if(editMode){return `<div class="hit-location">
+      <input class="e-input sm" type="text" value="${esc(loc.range)}" oninput="S.hitLocations[${i}].range=this.value;save()" style="width:38px;font-size:11px;color:var(--muted);text-align:center">
+      <input class="e-input w100" type="text" value="${esc(loc.name)}" oninput="S.hitLocations[${i}].name=this.value;save()" style="font-size:13px">
+      <div class="hit-hp-controls">
+        <button class="hit-btn" onclick="changeHP(${i},-1)">−</button>
+        <span style="font-size:13px;font-weight:700;color:var(--green)">${loc.currentHP}/</span><input class="e-input num" type="number" min="1" max="30" value="${loc.maxHP}" oninput="S.hitLocations[${i}].maxHP=parseInt(this.value)||1;save()" style="font-size:13px;font-weight:700;color:var(--green)">
+        <button class="hit-btn" onclick="changeHP(${i},1)">+</button>
+      </div>
+      <button class="del-btn" onclick="S.hitLocations.splice(${i},1);save();renderHitLocs()">×</button>
+    </div>`;}
+    return `<div class="hit-location">
+      <div class="hit-range">${loc.range}</div>
+      <div class="hit-name">${loc.name}</div>
+      <div class="hit-hp-controls">
+        <button class="hit-btn" onclick="changeHP(${i},-1)">−</button>
+        <div class="hit-hp-display ${cls}">${loc.currentHP}/${loc.maxHP}</div>
+        <button class="hit-btn" onclick="changeHP(${i},1)">+</button>
+      </div>
+    </div>`;
+  }).join('');
+  const a=document.getElementById('add-hitlec');
+  if(a) a.innerHTML=editMode?`<button class="add-btn" onclick="S.hitLocations.push({name:'Localisation',range:'--',maxHP:5,currentHP:5});save();renderHitLocs()">+ Ajouter</button>`:'';
+}
+
+function renderWeapons(){
+  const c=document.getElementById('weapons');if(!c)return;
+  if(editMode){
+    c.innerHTML=S.weapons.map((w,i)=>`
+      <div class="weapon-card">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+          <input class="e-input w100" type="text" value="${esc(w.name)}" oninput="S.weapons[${i}].name=this.value;save()" style="font-size:14px;font-weight:700">
+          <button class="del-btn" onclick="S.weapons.splice(${i},1);save();renderWeapons()">×</button>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-bottom:6px">
+          Dég: <input class="e-input sm" type="text" value="${esc(w.dmg)}" oninput="S.weapons[${i}].dmg=this.value;save()">
+          Taille: <input class="e-input" type="text" value="${esc(w.size)}" oninput="S.weapons[${i}].size=this.value;save()" style="width:28px">
+          Portée: <input class="e-input" type="text" value="${esc(w.range)}" oninput="S.weapons[${i}].range=this.value;save()" style="width:28px">
+          AP/HP: <input class="e-input sm" type="text" value="${esc(w.apHP)}" oninput="S.weapons[${i}].apHP=this.value;save()" style="width:38px">
+        </div>
+        <input class="e-input w100" type="text" value="${esc(w.effects)}" oninput="S.weapons[${i}].effects=this.value;save()" placeholder="Effets spéciaux" style="font-size:11px">
+      </div>`).join('');
+  } else {
+    c.innerHTML=S.weapons.map(w=>`
+      <div class="weapon-card">
+        <div class="weapon-name">${esc(w.name)}</div>
+        <div class="weapon-stats">
+          <div class="weapon-stat">Dégâts: <span>${esc(w.dmg)}</span></div>
+          <div class="weapon-stat">Taille: <span>${esc(w.size)}</span></div>
+          <div class="weapon-stat">Portée: <span>${esc(w.range)}</span></div>
+          <div class="weapon-stat">AP/HP: <span>${esc(w.apHP)}</span></div>
+        </div>
+        ${w.effects?`<div class="weapon-effects">⚡ ${esc(w.effects)}</div>`:''}
+      </div>`).join('');
+  }
+  const a=document.getElementById('add-weapon');
+  if(a) a.innerHTML=editMode?`<button class="add-btn" onclick="S.weapons.push({name:'Arme',dmg:'1D6',size:'M',range:'M',apHP:'1/5',effects:''});save();renderWeapons()">+ Ajouter une arme</button>`:'';
+}
+
+function renderEquipment(){
+  const c=document.getElementById('equipment');if(!c)return;
+  if(editMode){
+    c.innerHTML=S.equipment.map((e,i)=>`
+      <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(34,34,64,.5)">
+        <input class="e-input w100" type="text" value="${esc(e.name)}" oninput="S.equipment[${i}].name=this.value;save()">
+        <span style="font-size:11px;color:var(--muted)">ENC</span>
+        <input class="e-input num" type="number" min="0" value="${esc(e.enc)}" oninput="S.equipment[${i}].enc=this.value;save()" style="width:35px">
+        <button class="del-btn" onclick="S.equipment.splice(${i},1);save();renderEquipment()">×</button>
+      </div>`).join('')
+    +`<button class="add-btn" style="margin-top:8px" onclick="S.equipment.push({name:'Objet',enc:'0'});save();renderEquipment()">+ Ajouter</button>`
+    +`<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;font-size:12px;align-items:center">
+        <span style="color:var(--muted)">ENC:</span><input class="e-input sm" type="text" value="${esc(S.enc.current)}" oninput="S.enc.current=this.value;save()">
+        <span style="color:var(--muted)">Encombré:</span><input class="e-input sm" type="text" value="${esc(S.enc.encumbered)}" oninput="S.enc.encumbered=this.value;save()">
+        <span style="color:var(--muted)">Surchargé:</span><input class="e-input sm" type="text" value="${esc(S.enc.overloaded)}" oninput="S.enc.overloaded=this.value;save()">
+      </div>`;
+  } else {
+    c.innerHTML=S.equipment.map(e=>`
+      <div class="skill-row"><div class="skill-name-col"><div class="skill-name">${esc(e.name)}</div></div><div style="font-size:11px;color:var(--muted)">ENC ${esc(e.enc)}</div></div>`).join('')
+    +`<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:12px">
+        <span style="color:var(--muted)">ENC / Encombré / Surchargé</span>
+        <span style="color:var(--green)">${esc(S.enc.current)} / ${esc(S.enc.encumbered)} / ${esc(S.enc.overloaded)}</span>
+      </div>`;
+  }
+}
+
+// ══ JOURNAL PAGES ══
+let openCanvases=new Set();
+let journalArchivesOpen=false;
+const drawState={};
+
+function renderJournal(){
+  const el=document.getElementById('journal-pages');
+  if(!el)return;
+  const active=(S.pages||[]).filter(p=>!p.archived);
+  const archived=(S.pages||[]).filter(p=>p.archived);
+  let html='';
+  if(!active.length) html+=`<div style="color:var(--muted);font-size:13px;text-align:center;padding:24px 0">📖 Aucune page — commence à écrire !</div>`;
+  active.forEach(p=>{ html+=renderPageCard(p); });
+  html+=`<button class="add-btn" onclick="addPage()">+ Nouvelle page</button>`;
+  if(archived.length){
+    html+=`<button class="archives-toggle" onclick="toggleJournalArchives()">${journalArchivesOpen?'▼':'▶'} Archives (${archived.length})</button>`;
+    if(journalArchivesOpen) archived.forEach(p=>{ html+=renderPageCard(p); });
+  }
+  el.innerHTML=html;
+  setTimeout(()=>{ (S.pages||[]).forEach(p=>{ if(openCanvases.has(p.id)) initCanvas(p.id,p.drawing); }); },0);
+}
+
+function renderPageCard(page){
+  const n=safeN(page.id);
+  const hasCanvas=openCanvases.has(page.id);
+  const colors=['#1a1a1a','#4a3728','#8b2635','#2d5a27','#1a3a5c','#c88e28'];
+  const colorBtns=colors.map(c=>`<button class="draw-color-btn" style="background:${c}" onclick="setDrawColor('${n}','${c}')"></button>`).join('');
+  const canvasHtml=hasCanvas?`
+    <div class="canvas-wrap">
+      <div class="canvas-toolbar" id="toolbar_${page.id}">
+        <button class="draw-tool-btn active" data-tool="pen" onclick="setDrawTool('${n}','pen')" title="Stylo">✏️</button>
+        <button class="draw-tool-btn" data-tool="eraser" onclick="setDrawTool('${n}','eraser')" title="Gomme">🧹</button>
+        <div class="draw-sep"></div>
+        ${colorBtns}
+        <div class="draw-sep"></div>
+        <button class="draw-size-btn" onclick="setDrawSize('${n}',2)" title="Fin">·</button>
+        <button class="draw-size-btn" onclick="setDrawSize('${n}',4)" title="Moyen">•</button>
+        <button class="draw-size-btn" onclick="setDrawSize('${n}',8)" title="Épais">●</button>
+        <div class="draw-sep"></div>
+        <button class="draw-tool-btn" onclick="clearCanvas('${n}')" style="color:var(--red)" title="Tout effacer">🗑</button>
+      </div>
+      <canvas id="canvas_${page.id}" class="draw-canvas"></canvas>
+    </div>`:'';
+  return `<div class="journal-page${page.archived?' archived':''}">
+    <div class="jpage-header">
+      <input class="jpage-title" value="${esc(page.title)}" oninput="savePageField('${n}','title',this.value)" placeholder="Titre…">
+      <span class="jpage-date">${esc(page.date)}</span>
+      <div class="jpage-actions">
+        <button class="q-btn ${page.archived?'green':'yellow'}" onclick="archivePage('${n}')" title="${page.archived?'Désarchiver':'Archiver'}">${page.archived?'📂':'📁'}</button>
+        <button class="q-btn red" onclick="deletePage('${n}')" title="Supprimer">🗑</button>
+      </div>
+    </div>
+    <textarea class="jpage-text" oninput="savePageField('${n}','content',this.value)" placeholder="Écris librement…" rows="5">${esc(page.content||'')}</textarea>
+    <div class="jpage-draw-bar">
+      <button class="q-btn${hasCanvas?' green':''}" onclick="toggleCanvas('${n}')">${hasCanvas?'🎨 Masquer':'🎨 Dessin'}</button>
+      ${page.drawing&&!hasCanvas?'<span style="font-size:11px;color:var(--muted)">· croquis enregistré</span>':''}
+    </div>
+    ${canvasHtml}
+  </div>`;
+}
+
+function addPage(){
+  const id='p_'+Date.now()+'_'+Math.random().toString(36).slice(2,5);
+  if(!S.pages) S.pages=[];
+  S.pages.unshift({id,title:'Nouvelle page',content:'',drawing:null,date:new Date().toLocaleDateString('fr-FR'),archived:false});
+  save();renderJournal();
+}
+
+function savePageField(id,field,value){
+  const p=(S.pages||[]).find(p=>p.id===id);
+  if(p){p[field]=value;save();}
+}
+
+function archivePage(id){
+  const p=(S.pages||[]).find(p=>p.id===id);
+  if(p){p.archived=!p.archived;openCanvases.delete(id);save();renderJournal();}
+}
+
+function deletePage(id){
+  if(!confirm('Supprimer cette page définitivement ?'))return;
+  S.pages=(S.pages||[]).filter(p=>p.id!==id);
+  openCanvases.delete(id);save();renderJournal();
+}
+
+function toggleCanvas(id){
+  if(openCanvases.has(id)) openCanvases.delete(id); else openCanvases.add(id);
+  renderJournal();
+}
+
+function toggleJournalArchives(){
+  journalArchivesOpen=!journalArchivesOpen;
+  renderJournal();
+}
+
+function initCanvas(pageId,drawing){
+  const canvas=document.getElementById('canvas_'+pageId);
+  if(!canvas)return;
+  const w=canvas.offsetWidth||360;
+  canvas.width=w; canvas.height=280;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#fafafa';ctx.fillRect(0,0,w,280);
+  if(drawing){const img=new Image();img.onload=()=>ctx.drawImage(img,0,0);img.src=drawing;}
+  if(!drawState[pageId]) drawState[pageId]={tool:'pen',color:'#1a1a1a',size:3,isDrawing:false};
+  const getPos=e=>{
+    const r=canvas.getBoundingClientRect(),sx=canvas.width/r.width,sy=canvas.height/r.height;
+    const src=e.touches?e.touches[0]:e;
+    return {x:(src.clientX-r.left)*sx,y:(src.clientY-r.top)*sy};
+  };
+  canvas.onmousedown=canvas.ontouchstart=e=>{
+    e.preventDefault();const ds=drawState[pageId];ds.isDrawing=true;
+    const p=getPos(e);const ctx=canvas.getContext('2d');ctx.beginPath();ctx.moveTo(p.x,p.y);
+  };
+  canvas.onmousemove=canvas.ontouchmove=e=>{
+    e.preventDefault();const ds=drawState[pageId];if(!ds.isDrawing)return;
+    const p=getPos(e);const ctx=canvas.getContext('2d');
+    if(ds.tool==='eraser'){ctx.globalCompositeOperation='destination-out';ctx.lineWidth=ds.size*5;}
+    else{ctx.globalCompositeOperation='source-over';ctx.strokeStyle=ds.color;ctx.lineWidth=ds.size;}
+    ctx.lineCap='round';ctx.lineJoin='round';ctx.lineTo(p.x,p.y);ctx.stroke();ctx.beginPath();ctx.moveTo(p.x,p.y);
+  };
+  canvas.onmouseup=canvas.onmouseleave=canvas.ontouchend=e=>{
+    const ds=drawState[pageId];if(!ds.isDrawing)return;ds.isDrawing=false;
+    canvas.getContext('2d').globalCompositeOperation='source-over';
+    const pg=(S.pages||[]).find(p=>p.id===pageId);
+    if(pg){pg.drawing=canvas.toDataURL();save();}
+  };
+}
+
+function setDrawTool(pageId,tool){
+  if(drawState[pageId]) drawState[pageId].tool=tool;
+  const tb=document.getElementById('toolbar_'+pageId);
+  if(tb) tb.querySelectorAll('.draw-tool-btn[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===tool));
+}
+function setDrawColor(pageId,color){if(drawState[pageId]) drawState[pageId].color=color;}
+function setDrawSize(pageId,size){if(drawState[pageId]) drawState[pageId].size=parseInt(size);}
+function clearCanvas(pageId){
+  const canvas=document.getElementById('canvas_'+pageId);if(!canvas)return;
+  const ctx=canvas.getContext('2d');ctx.globalCompositeOperation='source-over';
+  ctx.fillStyle='#fafafa';ctx.fillRect(0,0,canvas.width,canvas.height);
+  const pg=(S.pages||[]).find(p=>p.id===pageId);
+  if(pg){pg.drawing=null;save();}
+}
+
+function loadBgNotes(){
+  const bg=document.getElementById('bg-notes');if(bg)bg.value=S.bgNotes||'';
+}
+
+// ══ ACTIONS ══
+function change(type,delta){
+  if(type==='lp') S.lp.current=Math.max(0,Math.min(S.lp.max,S.lp.current+delta));
+  if(type==='mp') S.mp.current=Math.max(0,Math.min(S.mp.max,S.mp.current+delta));
+  save();renderTrackers();renderMPDots();
+}
+
+function changeHP(idx,delta){
+  const loc=S.hitLocations[idx];
+  loc.currentHP=Math.max(-loc.maxHP,Math.min(loc.maxHP,loc.currentHP+delta));
+  save();renderHitLocs();
+}
+
+function setFatigue(name){S.fatigue=name;save();renderFatigue();}
+
+function adjMod(name,delta){
+  if(!S.skillMods)S.skillMods={};
+  S.skillMods[name]=(S.skillMods[name]||0)+delta;
+  save();renderSkillSections();
+}
+
+function renderSkillSections(){
+  renderResistances();renderStdSkills();renderProfSkills();renderMagicSkills();renderCombatStyles();
+}
+
+function renameSkill(type,idx,val){
+  const oldName=S[type+'Skills'][idx].name;
+  const oldMod=S.skillMods[oldName]||0;
+  delete S.skillMods[oldName];
+  S[type+'Skills'][idx].name=val;
+  S.skillMods[val]=oldMod;
+  save();
+}
+
+function renameCS(idx,val){
+  const oldName=S.combatStyles[idx].name;
+  const oldMod=S.skillMods[oldName]||0;
+  delete S.skillMods[oldName];
+  S.combatStyles[idx].name=val;
+  S.skillMods[val]=oldMod;
+  save();
+}
+
+function delSkill(type,idx){
+  const name=S[type+'Skills'][idx].name;
+  delete S.skillMods[name];
+  S[type+'Skills'].splice(idx,1);
+  save();renderSkillSections();
+}
+
+function addSkill(type){
+  const sk={name:'Nouvelle compétence',formula:'INTx2'};
+  if(type==='std')sk.trained=false;
+  S[type+'Skills'].push(sk);
+  save();renderSkillSections();
+}
+
+function showTab(tab){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.getElementById('nav-'+tab).classList.add('active');
+  renderAll();
+}
+
+function saveBgNotes(){S.bgNotes=document.getElementById('bg-notes').value;save();}
+
+// ══ SKILL SUCCESSES ══
+function incSuccess(n,delta){
+  if(!S.skillSuccesses)S.skillSuccesses={};
+  S.skillSuccesses[n]=Math.max(0,(S.skillSuccesses[n]||0)+delta);
+  save();renderSkillSections();
+}
+
+// ══ EXPORT ══
+function exportJSON(){
+  const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=(S.charName||'perso').replace(/[^a-z0-9]/gi,'_')+'_mythras.json';
+  a.click();URL.revokeObjectURL(url);
+}
+
+function exportText(){
+  const L=(n,v)=>`${n}: ${v}\n`;
+  const HR=(n)=>`\n${'═'.repeat(40)}\n ${n}\n${'═'.repeat(40)}\n`;
+  const hr=(n)=>`\n── ${n} ${'─'.repeat(Math.max(0,36-n.length))}\n`;
+  let t=`FICHE PERSONNAGE — MYTHRAS\n${'═'.repeat(40)}\n`;
+  t+=`${S.charName}\n${S.charSubtitle}\n\n`;
+  t+=HR('CARACTÉRISTIQUES');
+  Object.entries(S.stats).forEach(([k,v])=>t+=`  ${k}: ${v}  `);t+='\n';
+  t+=hr('Attributs Dérivés');
+  S.derivedAttrs.forEach(a=>t+=`  ${a.name}: ${a.value}\n`);
+  t+=HR('IDENTITÉ');
+  S.identity.forEach(r=>t+=L('  '+r.key,r.val));
+  t+=`\n  Argent: ${S.money.po} PO  ${S.money.pa} PA  ${S.money.rc} RC\n`;
+  t+=HR('COMPÉTENCES');
+  t+=hr('Résistances');
+  [{name:'Brawn',formula:'STR+SIZ'},{name:'Endurance',formula:'CONx2'},{name:'Evade',formula:'DEXx2'},{name:'Willpower',formula:'POWx2'}].forEach(r=>{
+    const tot=calcBase(r.formula)+(S.skillMods[r.name]||0);
+    t+=`  ${r.name}: ${tot}%\n`;
+  });
+  t+=hr('Standard');
+  S.stdSkills.forEach(s=>{const tot=calcBase(s.formula)+(S.skillMods[s.name]||0);t+=`  ${s.trained?'●':'○'} ${s.name}: ${tot}%\n`;});
+  t+=hr('Professionnel');
+  S.profSkills.forEach(s=>{const tot=calcBase(s.formula)+(S.skillMods[s.name]||0);t+=`  ● ${s.name}: ${tot}%\n`;});
+  t+=hr('Magie');
+  S.magicSkills.forEach(s=>{const tot=calcBase(s.formula)+(S.skillMods[s.name]||0);t+=`  ● ${s.name}: ${tot}%\n`;});
+  t+=hr('Styles de combat');
+  S.combatStyles.forEach(cs=>{const tot=calcBase(cs.formula)+(S.skillMods[cs.name]||0);t+=`  ${cs.name}: ${tot}% (${cs.weapons}) [${cs.trait}]\n`;});
+  t+=HR('MAGIE');
+  t+=hr('Folk Magic');
+  S.folkSpells.forEach(s=>t+=`  ${s.name} (${s.cost}) — ${s.desc}\n`);
+  t+=hr('Sorcellerie');
+  S.sorcSpells.forEach(s=>t+=`  ${s.name} (${s.cost}) — ${s.desc}\n`);
+  t+=HR('COMBAT');
+  t+=hr('Points de vie');
+  S.hitLocations.forEach(l=>t+=`  ${l.range} ${l.name}: ${l.currentHP}/${l.maxHP}\n`);
+  t+=hr('Armes');
+  S.weapons.forEach(w=>t+=`  ${w.name}: ${w.dmg} | Taille:${w.size} Portée:${w.range} AP/HP:${w.apHP}${w.effects?' | '+w.effects:''}\n`);
+  t+=HR('PASSIONS & CAPACITÉS');
+  S.passions.forEach(p=>t+=`  ${p.name}: ${p.pct}%\n`);
+  t+='\n';S.abilities.forEach(a=>t+=`  • ${a}\n`);
+  if(S.bgNotes){t+=HR('BACKGROUND');t+=S.bgNotes+'\n';}
+  const activePages=(S.pages||[]).filter(p=>!p.archived);
+  if(activePages.length){t+=HR('JOURNAL');activePages.forEach(p=>{t+=hr(p.title||'Page');if(p.content)t+=p.content+'\n';});}
+  t+=`\n${'═'.repeat(40)}\nGénéré depuis Fiche Mythras\n`;
+  const blob=new Blob([t],{type:'text/plain;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=(S.charName||'perso').replace(/[^a-z0-9]/gi,'_')+'_mythras.txt';
+  a.click();URL.revokeObjectURL(url);
+}
+
+// ══ CHAR MANAGER ══
+function openCharMgr(){
+  renderCharMgr();
+  document.getElementById('char-mgr').style.display='flex';
+}
+function closeCharMgr(){
+  document.getElementById('char-mgr').style.display='none';
+}
+function renderCharMgr(){
+  const list=getCharList();
+  document.getElementById('char-mgr-list').innerHTML=list.map(ch=>`
+    <div class="char-card ${ch.id===activeCharId?'active':''}">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:15px;font-weight:700;color:${ch.id===activeCharId?'var(--green)':'var(--text)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(ch.name)}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(ch.subtitle||'')}</div>
+        ${ch.id===activeCharId?'<div style="font-size:10px;color:var(--green);margin-top:4px">● Actif</div>':''}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0">
+        ${ch.id!==activeCharId?`<button class="q-btn green" style="font-size:12px" onclick="switchChar('${ch.id}')">▶ Jouer</button>`:''}
+        <button class="q-btn" style="font-size:12px" onclick="duplicateChar('${ch.id}')">⧉ Copier</button>
+        <button class="q-btn red" style="font-size:12px" onclick="deleteChar('${ch.id}')">🗑</button>
+      </div>
+    </div>`).join('');
+}
+function switchChar(id){
+  save();
+  activeCharId=id;
+  localStorage.setItem('mythras_active_char',id);
+  S=loadStateForChar(id);
+  editMode=false;
+  closeCharMgr();
+  renderAll();
+}
+function createChar(){
+  const id='char_'+Date.now();
+  const newS=JSON.parse(JSON.stringify(D));
+  localStorage.setItem('mythras_char_'+id,JSON.stringify(newS));
+  const list=getCharList();
+  list.push({id,name:newS.charName,subtitle:newS.charSubtitle});
+  setCharList(list);
+  switchChar(id);
+}
+function duplicateChar(id){
+  const raw=localStorage.getItem('mythras_char_'+id);
+  if(!raw)return;
+  const newId='char_'+Date.now();
+  const data=JSON.parse(raw);
+  data.charName=data.charName+' (copie)';
+  localStorage.setItem('mythras_char_'+newId,JSON.stringify(data));
+  const list=getCharList();
+  list.push({id:newId,name:data.charName,subtitle:data.charSubtitle||''});
+  setCharList(list);
+  renderCharMgr();
+}
+function deleteChar(id){
+  const list=getCharList();
+  if(list.length<=1){alert('Impossible de supprimer le seul personnage.');return;}
+  if(!confirm('Supprimer ce personnage définitivement ?'))return;
+  const newList=list.filter(c=>c.id!==id);
+  setCharList(newList);
+  localStorage.removeItem('mythras_char_'+id);
+  if(activeCharId===id) switchChar(newList[0].id);
+  else renderCharMgr();
+}
+function doImportChar(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      // Validation minimale
+      if(typeof data!=='object'||Array.isArray(data)) throw new Error('Format invalide');
+      const id='char_'+Date.now();
+      // Passer par migrateState pour combler les champs manquants
+      const migrated=migrateState(JSON.parse(JSON.stringify(data)));
+      try{
+        localStorage.setItem('mythras_char_'+id, JSON.stringify(migrated));
+      }catch(q){alert('Stockage insuffisant pour importer (les dessins prennent beaucoup de place).');return;}
+      const list=getCharList();
+      list.push({id,name:migrated.charName||'Importé',subtitle:migrated.charSubtitle||''});
+      setCharList(list);
+      closeCharMgr();
+      switchChar(id);
+    }catch(err){alert('Fichier JSON invalide : '+err.message);}
+  };
+  reader.readAsText(file);
+  input.value='';
+}
+
+// ══ DICE ROLLER ══
+const DICE_TYPES = [
+  {faces:4,  icon:'🔺', label:'d4'},
+  {faces:6,  icon:'⬡',  label:'d6'},
+  {faces:8,  icon:'◆',  label:'d8'},
+  {faces:10, icon:'🔷', label:'d10'},
+  {faces:12, icon:'⬟',  label:'d12'},
+  {faces:20, icon:'🔸', label:'d20'},
+  {faces:100,icon:'💯', label:'d100'},
+  {faces:3,  icon:'▲',  label:'d3'},
+];
+let DC = {type:20, count:1, mod:0, history:[]};
+
+function initDiceTab(){
+  const g=document.getElementById('dice-type-grid');
+  if(!g)return;
+  g.innerHTML=DICE_TYPES.map(d=>`
+    <button class="die-btn${DC.type===d.faces?' sel':''}" onclick="selectDie(${d.faces})">
+      <span class="die-icon">${d.icon}</span>
+      <span>${d.label}</span>
+    </button>`).join('');
+  document.getElementById('dice-count-val').textContent=DC.count;
+  document.getElementById('dice-mod-val').textContent=(DC.mod>=0?'+':'')+DC.mod;
+  renderDiceHistory();
+}
+
+function selectDie(faces){
+  DC.type=faces;
+  initDiceTab();
+}
+
+function adjDice(what,delta){
+  if(what==='count') DC.count=Math.max(1,Math.min(10,DC.count+delta));
+  else DC.mod=Math.max(-20,Math.min(20,DC.mod+delta));
+  document.getElementById('dice-count-val').textContent=DC.count;
+  document.getElementById('dice-mod-val').textContent=(DC.mod>=0?'+':'')+DC.mod;
+}
+
+function rollDice(){
+  const btn=document.getElementById('roll-btn');
+  btn.classList.add('rolling');
+  setTimeout(()=>btn.classList.remove('rolling'),420);
+
+  const rolls=[];
+  for(let i=0;i<DC.count;i++) rolls.push(Math.floor(Math.random()*DC.type)+1);
+  const rawSum=rolls.reduce((a,b)=>a+b,0);
+  const total=rawSum+DC.mod;
+
+  // animate slot-machine on faces
+  const area=document.getElementById('dice-result-area');
+  const dieName=DICE_TYPES.find(d=>d.faces===DC.type)?.label||'d'+DC.type;
+  const modStr=DC.mod!==0?(DC.mod>0?' + '+DC.mod:' − '+Math.abs(DC.mod)):'';
+
+  // Show spinning numbers first
+  area.innerHTML=`<div class="dice-faces">${rolls.map(()=>`<div class="die-face">…</div>`).join('')}</div>`;
+
+  let tick=0;
+  const spin=setInterval(()=>{
+    const faces=area.querySelector('.dice-faces');
+    if(!faces){clearInterval(spin);return;}
+    faces.innerHTML=rolls.map(()=>`<div class="die-face">${Math.floor(Math.random()*DC.type)+1}</div>`).join('');
+    tick++;
+    if(tick>=6){
+      clearInterval(spin);
+      showDiceResult(area, rolls, total, dieName, modStr);
+    }
+  },60);
+
+  // Save history
+  DC.history.unshift({dice:`${DC.count}${dieName}${modStr}`, rolls, total, ts:Date.now()});
+  if(DC.history.length>12) DC.history.pop();
+  renderDiceHistory();
+}
+
+function showDiceResult(area, rolls, total, dieName, modStr){
+  const isCrit=DC.type>=10&&rolls.some(r=>r===DC.type);
+  const isFumble=DC.type>=10&&rolls.some(r=>r===1);
+  const faceClass=isCrit?'crit':isFumble?'fumble':'';
+
+  area.innerHTML=`
+    <div class="dice-faces">${rolls.map((r,i)=>`<div class="die-face ${faceClass}" style="animation-delay:${i*60}ms">${r}</div>`).join('')}</div>
+    <div class="dice-total" style="animation-delay:${rolls.length*60}ms">${total}</div>
+    <div class="dice-total-label">${DC.count}${dieName}${modStr}${isCrit?' ✨ Critique!':isFumble?' 💀 Fumble!':''}</div>
+  `;
+}
+
+function renderDiceHistory(){
+  const el=document.getElementById('dice-history');
+  if(!el)return;
+  if(!DC.history.length){el.innerHTML='<div style="color:var(--muted);font-size:12px">Aucun lancer</div>';return;}
+  el.innerHTML=DC.history.map(h=>`
+    <div class="dice-hist-row">
+      <span class="dice-hist-dice">${h.dice}</span>
+      <span class="dice-hist-rolls">[${h.rolls.join(', ')}]</span>
+      <span class="dice-hist-total">${h.total}</span>
+    </div>`).join('');
+}
+
+function clearDiceHistory(){
+  DC.history=[];
+  renderDiceHistory();
+}
+
+if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
+document.addEventListener('DOMContentLoaded',renderAll);
+</script>
+</body>
+</html>
