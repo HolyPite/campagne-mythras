@@ -218,6 +218,7 @@ textarea:focus{outline:none;border-color:var(--green-dim)}
       <div style="display:flex;gap:6px;flex-shrink:0;align-items:center">
         <span id="save-ind" style="font-size:11px;color:var(--green);opacity:0;transition:opacity .4s;white-space:nowrap">💾 Sauvegardé</span>
         <button class="edit-btn-hdr" onclick="openCharMgr()" title="Changer de personnage">👥</button>
+        <button class="edit-btn-hdr" onclick="forceUpdate()" title="Mettre à jour l'app">🔄</button>
         <button class="edit-btn-hdr" id="edit-btn" onclick="toggleEdit()">✏️ Éditer</button>
       </div>
     </div>
@@ -1576,6 +1577,16 @@ function clearDiceHistory(){
 }
 
 if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
+
+async function forceUpdate(){
+  if('serviceWorker' in navigator){
+    const reg=await navigator.serviceWorker.getRegistration();
+    if(reg) await reg.unregister();
+  }
+  const keys=await caches.keys();
+  await Promise.all(keys.map(k=>caches.delete(k)));
+  location.reload(true);
+}
 document.addEventListener('DOMContentLoaded',renderAll);
 </script>
 </body>
