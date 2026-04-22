@@ -284,6 +284,9 @@ textarea:focus{outline:none;border-color:var(--green-dim)}
     <!-- SKILLS -->
     <div class="tab" id="tab-skills">
       <div id="eb-skills"></div>
+      <div style="padding:0 0 8px">
+        <input id="skill-search" type="search" placeholder="🔍 Rechercher une compétence…" oninput="filterSkills(this.value)" style="width:100%;padding:9px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none;-webkit-appearance:none">
+      </div>
       <div class="card">
         <div class="card-title">🛡️ Résistances</div>
         <div id="resistances"></div>
@@ -347,6 +350,7 @@ textarea:focus{outline:none;border-color:var(--green-dim)}
       </div>
       <div class="card">
         <div class="card-title">💀 Points de Vie par Localisation</div>
+        <div id="body-svg" style="display:flex;justify-content:center;margin-bottom:12px"></div>
         <div id="hit-locs"></div>
         <div id="add-hitlec"></div>
       </div>
@@ -410,6 +414,12 @@ textarea:focus{outline:none;border-color:var(--green-dim)}
           <button onclick="exportText()" style="padding:11px;background:rgba(255,209,102,.06);border:1px solid rgba(255,209,102,.25);border-radius:8px;color:var(--yellow);font-size:13px;cursor:pointer;font-weight:600;text-align:left">📄 Exporter en texte <span style="font-size:11px;font-weight:400;color:var(--muted)">— fiche lisible à partager</span></button>
         </div>
       </div>
+      <div class="card" style="margin-top:4px">
+        <div class="card-title">📌 Points de Sauvegarde</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Crée des points de contrôle pour revenir en arrière en cas d'erreur.</div>
+        <button onclick="saveCheckpoint()" style="width:100%;padding:11px;background:rgba(61,255,170,.06);border:1px solid var(--green-dim);border-radius:8px;color:var(--green);font-size:13px;cursor:pointer;font-weight:600;margin-bottom:10px">📌 Créer un point de sauvegarde</button>
+        <div id="history-list"></div>
+      </div>
     </div>
 
   </div>
@@ -439,6 +449,9 @@ textarea:focus{outline:none;border-color:var(--green-dim)}
 </div>
 
 <script>
+let skillFilter='';
+function filterSkills(val){skillFilter=val.toLowerCase().trim();renderSkillSections();}
+
 // ══ EDIT MODE ══
 let editMode = false;
 function toggleEdit(){
@@ -849,23 +862,32 @@ function renderResistances(){
 
 function renderStdSkills(){
   const c=document.getElementById('std-skills');if(!c)return;
-  c.innerHTML=S.stdSkills.map((s,i)=>mkSkillRow(s,s.trained,true,'std',i)).join('');
+  const f=skillFilter;
+  const rows=S.stdSkills.filter(s=>!f||s.name.toLowerCase().includes(f));
+  c.innerHTML=rows.length?rows.map((s,i)=>mkSkillRow(s,s.trained,true,'std',S.stdSkills.indexOf(s))).join('')
+    :(f?'<div style="color:var(--muted);font-size:12px;padding:8px">Aucune compétence trouvée</div>':'');
   const a=document.getElementById('add-std');
-  if(a) a.innerHTML=editMode?`<button class="add-btn" onclick="addSkill('std')">+ Ajouter</button>`:'';
+  if(a) a.innerHTML=editMode&&!f?`<button class="add-btn" onclick="addSkill('std')">+ Ajouter</button>`:'';
 }
 
 function renderProfSkills(){
   const c=document.getElementById('prof-skills');if(!c)return;
-  c.innerHTML=S.profSkills.map((s,i)=>mkSkillRow(s,true,true,'prof',i)).join('');
+  const f=skillFilter;
+  const rows=S.profSkills.filter(s=>!f||s.name.toLowerCase().includes(f));
+  c.innerHTML=rows.length?rows.map((s,i)=>mkSkillRow(s,true,true,'prof',S.profSkills.indexOf(s))).join('')
+    :(f?'<div style="color:var(--muted);font-size:12px;padding:8px">Aucune compétence trouvée</div>':'');
   const a=document.getElementById('add-prof');
-  if(a) a.innerHTML=editMode?`<button class="add-btn" onclick="addSkill('prof')">+ Ajouter</button>`:'';
+  if(a) a.innerHTML=editMode&&!f?`<button class="add-btn" onclick="addSkill('prof')">+ Ajouter</button>`:'';
 }
 
 function renderMagicSkills(){
   const c=document.getElementById('magic-skills');if(!c)return;
-  c.innerHTML=S.magicSkills.map((s,i)=>mkSkillRow(s,true,true,'magic',i)).join('');
+  const f=skillFilter;
+  const rows=S.magicSkills.filter(s=>!f||s.name.toLowerCase().includes(f));
+  c.innerHTML=rows.length?rows.map((s,i)=>mkSkillRow(s,true,true,'magic',S.magicSkills.indexOf(s))).join('')
+    :(f?'<div style="color:var(--muted);font-size:12px;padding:8px">Aucune compétence trouvée</div>':'');
   const a=document.getElementById('add-magic');
-  if(a) a.innerHTML=editMode?`<button class="add-btn" onclick="addSkill('magic')">+ Ajouter</button>`:'';
+  if(a) a.innerHTML=editMode&&!f?`<button class="add-btn" onclick="addSkill('magic')">+ Ajouter</button>`:'';
 }
 
 function renderCombatStyles(){
@@ -1003,6 +1025,33 @@ function renderFatigue(){
 }
 
 function renderHitLocs(){
+  const bsvg=document.getElementById('body-svg');
+  if(bsvg){
+    const ZONES=[
+      {shape:'circle',cx:50,cy:16,r:13},
+      {shape:'rect',x:72,y:32,w:16,h:45},
+      {shape:'rect',x:12,y:32,w:16,h:45},
+      {shape:'rect',x:30,y:32,w:40,h:36},
+      {shape:'rect',x:30,y:70,w:40,h:28},
+      {shape:'rect',x:52,y:100,w:18,h:65},
+      {shape:'rect',x:30,y:100,w:18,h:65},
+    ];
+    const zoneColor=loc=>{
+      if(!loc) return ['rgba(34,34,64,.4)','#222240'];
+      if(loc.currentHP<=0) return ['rgba(255,77,109,.35)','#ff4d6d'];
+      if(loc.currentHP/loc.maxHP<=0.5) return ['rgba(255,209,102,.35)','#ffd166'];
+      return ['rgba(61,255,170,.25)','#1a6644'];
+    };
+    const shapes=ZONES.map((z,i)=>{
+      const loc=S.hitLocations[i];
+      const [fill,stroke]=zoneColor(loc);
+      const click=loc?`onclick="changeHP(${i}, event.shiftKey?1:-1)" style="cursor:pointer"`:'';
+      if(z.shape==='circle')
+        return `<circle cx="${z.cx}" cy="${z.cy}" r="${z.r}" fill="${fill}" stroke="${stroke}" stroke-width="1.5" ${click}/>`;
+      return `<rect x="${z.x}" y="${z.y}" width="${z.w}" height="${z.h}" rx="4" fill="${fill}" stroke="${stroke}" stroke-width="1.5" ${click}/>`;
+    }).join('');
+    bsvg.innerHTML=`<svg viewBox="0 0 100 180" width="110" height="198" xmlns="http://www.w3.org/2000/svg" title="Clic = −1 PV / Shift+clic = +1 PV">${shapes}</svg>`;
+  }
   const c=document.getElementById('hit-locs');if(!c)return;
   c.innerHTML=S.hitLocations.map((loc,i)=>{
     const ratio=loc.maxHP>0?loc.currentHP/loc.maxHP:0;
@@ -1111,6 +1160,7 @@ function renderJournal(){
   }
   el.innerHTML=html;
   setTimeout(()=>{ (S.pages||[]).forEach(p=>{ if(openCanvases.has(p.id)) initCanvas(p.id,p.drawing); }); },0);
+  renderHistory();
 }
 
 function renderPageCard(page){
@@ -1322,6 +1372,43 @@ function toggleSkillCheck(n,type){
   const c=S.skillSuccesses[n]||{s:false,f:false};
   S.skillSuccesses[n]={...c,[type]:!c[type]};
   save();renderSkillSections();
+}
+
+// ══ HISTORIQUE ══
+function getHistory(){return JSON.parse(localStorage.getItem('mythras_hist_'+activeCharId)||'[]');}
+function setHistory(h){localStorage.setItem('mythras_hist_'+activeCharId,JSON.stringify(h));}
+
+function saveCheckpoint(){
+  const now=new Date();
+  const label=now.toLocaleDateString('fr-FR')+' '+now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  const hist=getHistory();
+  hist.unshift({ts:now.getTime(),label,snap:JSON.stringify(S)});
+  setHistory(hist.slice(0,5));
+  renderHistory();
+  const el=document.getElementById('save-ind');
+  if(el){el.textContent='📌 Point sauvegardé';el.style.opacity='1';el.style.color='var(--green)';clearTimeout(el._t);el._t=setTimeout(()=>{el.textContent='💾 Sauvegardé';el.style.opacity='0';},2000);}
+}
+
+function restoreCheckpoint(idx){
+  const hist=getHistory();
+  if(!hist[idx]) return;
+  if(!confirm('Restaurer ce point de sauvegarde ? Les modifications actuelles seront perdues.')) return;
+  Object.assign(S,migrateState(JSON.parse(hist[idx].snap)));
+  save();renderAll();
+}
+
+function renderHistory(){
+  const c=document.getElementById('history-list');if(!c)return;
+  const hist=getHistory();
+  if(!hist.length){c.innerHTML='<div style="color:var(--muted);font-size:12px">Aucun point de sauvegarde</div>';return;}
+  c.innerHTML=hist.map((h,i)=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-top:1px solid var(--border);gap:8px">
+      <div>
+        <div style="font-size:12px;font-weight:600">${esc(h.label)}</div>
+        <div style="font-size:10px;color:var(--muted)">${esc(JSON.parse(h.snap).charName||'')}</div>
+      </div>
+      <button onclick="restoreCheckpoint(${i})" style="padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--muted);font-size:11px;cursor:pointer;white-space:nowrap">Restaurer</button>
+    </div>`).join('');
 }
 
 // ══ EXPORT ══
@@ -1576,7 +1663,34 @@ function clearDiceHistory(){
   renderDiceHistory();
 }
 
-if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
+// ══ SERVICE WORKER & UPDATE ══
+let _swWaiting=null;
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js').then(reg=>{
+    if(reg.waiting) showUpdateBanner(reg.waiting);
+    reg.addEventListener('updatefound',()=>{
+      const nw=reg.installing;
+      nw.addEventListener('statechange',()=>{
+        if(nw.state==='installed'&&navigator.serviceWorker.controller) showUpdateBanner(nw);
+      });
+    });
+  });
+  navigator.serviceWorker.addEventListener('controllerchange',()=>location.reload());
+}
+
+function showUpdateBanner(worker){
+  _swWaiting=worker;
+  if(document.getElementById('update-banner')) return;
+  const b=document.createElement('div');
+  b.id='update-banner';
+  b.style.cssText='position:fixed;bottom:64px;left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:448px;background:var(--card2);border:1px solid var(--green-dim);border-radius:10px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;z-index:150;font-size:13px;gap:10px;box-shadow:0 4px 20px rgba(0,0,0,.4)';
+  b.innerHTML='<span>✨ Nouvelle version disponible</span><button onclick="applyUpdate()" style="padding:6px 14px;border-radius:6px;border:1px solid var(--green-dim);background:rgba(61,255,170,.12);color:var(--green);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">Mettre à jour</button>';
+  document.body.appendChild(b);
+}
+
+function applyUpdate(){
+  if(_swWaiting) _swWaiting.postMessage({type:'SKIP_WAITING'});
+}
 
 async function forceUpdate(){
   if('serviceWorker' in navigator){
@@ -1587,6 +1701,26 @@ async function forceUpdate(){
   await Promise.all(keys.map(k=>caches.delete(k)));
   location.reload(true);
 }
+
+// ══ SWIPE ENTRE ONGLETS ══
+(function(){
+  const TABS=['perso','skills','magie','combat','dice','journal'];
+  let sx=0,sy=0;
+  document.addEventListener('DOMContentLoaded',()=>{
+    const content=document.querySelector('.content');
+    content.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;},{passive:true});
+    content.addEventListener('touchend',e=>{
+      if(e.target.tagName==='CANVAS') return;
+      const dx=e.changedTouches[0].clientX-sx;
+      const dy=Math.abs(e.changedTouches[0].clientY-sy);
+      if(Math.abs(dx)<50||dy>80) return;
+      const cur=TABS.findIndex(t=>document.getElementById('tab-'+t).classList.contains('active'));
+      const next=dx<0?Math.min(cur+1,TABS.length-1):Math.max(cur-1,0);
+      if(next!==cur) showTab(TABS[next]);
+    },{passive:true});
+  });
+})();
+
 document.addEventListener('DOMContentLoaded',renderAll);
 </script>
 </body>
