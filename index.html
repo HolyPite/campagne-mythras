@@ -311,7 +311,7 @@ textarea:focus{outline:none;border-color:var(--green-dim)}
         <div class="card-title">✨ Points de Magie</div>
         <div style="text-align:center;padding:10px 0">
           <div style="font-size:52px;font-weight:700;color:var(--green)" id="mp-big">13</div>
-          <div style="font-size:12px;color:var(--muted)">/ 13 maximum</div>
+          <div id="mp-max-label" style="font-size:12px;color:var(--muted)">/ — maximum</div>
           <div style="display:flex;justify-content:center;gap:20px;margin-top:14px">
             <button class="tracker-btn" style="width:44px;height:44px;font-size:22px" onclick="change('mp',-1)">−</button>
             <button class="tracker-btn" style="width:44px;height:44px;font-size:22px" onclick="change('mp',1)">+</button>
@@ -487,7 +487,8 @@ const D = {
   folkSpells:[],sorcSpells:[],sorcSchoolQuote:'',
   weapons:[],equipment:[],
   enc:{current:'0',encumbered:'0',overloaded:'0'},
-  lp:{current:3,max:3},mp:{current:10,max:10},
+  lp:{current:3,max:3},mp:{current:10,modMax:0},
+  statMods:{},
   fatigue:'Fresh',
   hitLocations:[
     {name:'Tête',range:'19-20',maxHP:4,currentHP:4},
@@ -547,6 +548,9 @@ function migrateState(S){
   if(!S.skillMods) S.skillMods=JSON.parse(JSON.stringify(D.skillMods));
   Object.keys(D.skillMods).forEach(k=>{ if(S.skillMods[k]===undefined) S.skillMods[k]=D.skillMods[k]; });
   S.hitLocations=S.hitLocations||D.hitLocations;
+  if(!S.statMods) S.statMods={};
+  if(S.mp.modMax===undefined) S.mp.modMax=0;
+  delete S.mp.max;
   if(!S.skillSuccesses) S.skillSuccesses={};
   // Migration : ancien format numérique → {s, f}
   Object.keys(S.skillSuccesses).forEach(k=>{
@@ -594,9 +598,11 @@ function save(){
 // ══ CALC ══
 const RESIST=[{name:'Brawn',formula:'STR+SIZ'},{name:'Endurance',formula:'CONx2'},{name:'Evade',formula:'DEXx2'},{name:'Willpower',formula:'POWx2'}];
 
+function effStat(k){ return (S.stats[k]||0)+((S.statMods||{})[k]||0); }
+function mpMax(){ return effStat('POW')+(S.mp.modMax||0); }
+
 function calcBase(formula){
-  const st=S.stats;
-  const f=formula.replace(/([A-Z]{2,3})/g,m=>st[m]!==undefined?st[m]:0).replace(/[xX]/g,'*');
+  const f=formula.replace(/([A-Z]{2,3})/g,m=>S.stats[m]!==undefined?effStat(m):0).replace(/[xX]/g,'*');
   try{return Function('"use strict";return('+f+')')();}catch(e){return 0;}
 }
 
@@ -629,23 +635,34 @@ function renderTrackers(){
   const lp=document.getElementById('display-lp');
   const mp=document.getElementById('display-mp');
   const mpb=document.getElementById('mp-big');
+  const mx=mpMax();
   if(editMode){
     lp.innerHTML=`${S.lp.current}/<input class="e-input num" type="number" min="1" value="${S.lp.max}" oninput="S.lp.max=parseInt(this.value)||1;save()">`;
-    mp.innerHTML=`${S.mp.current}/<input class="e-input num" type="number" min="1" value="${S.mp.max}" oninput="S.mp.max=parseInt(this.value)||1;save();renderMPDots()">`;
+    mp.innerHTML=`${S.mp.current}/${mx}`;
   } else {
     lp.textContent=S.lp.current+'/'+S.lp.max;
-    mp.textContent=S.mp.current+'/'+S.mp.max;
+    mp.textContent=S.mp.current+'/'+mx;
   }
   if(mpb) mpb.textContent=S.mp.current;
+  const lbl=document.getElementById('mp-max-label');
+  if(lbl) lbl.textContent='/ '+mx+' maximum';
 }
 
 function renderMPDots(){
   const c=document.getElementById('mp-dots');if(!c)return;c.innerHTML='';
-  for(let i=0;i<S.mp.max;i++){
+  const mx=mpMax();
+  for(let i=0;i<mx;i++){
     const d=document.createElement('div');const active=i<S.mp.current;
     d.style.cssText=`width:20px;height:20px;border-radius:50%;border:2px solid ${active?'var(--green)':'var(--border)'};background:${active?'rgba(61,255,170,.18)':'transparent'};cursor:pointer;transition:all .2s`;
     d.onclick=()=>{S.mp.current=i+1;save();renderTrackers();renderMPDots();};c.appendChild(d);
   }
+  const bonus=S.mp.modMax||0;
+  const bonusStr=(bonus>=0?'+':'')+bonus;
+  const bonusCol=bonus>0?'var(--green)':bonus<0?'var(--red)':'var(--muted)';
+  const row=document.createElement('div');
+  row.style.cssText='margin-top:12px;display:flex;align-items:center;gap:6px;justify-content:center;font-size:12px;color:var(--muted)';
+  row.innerHTML=`Bonus MP : <button onclick="adjMPMod(-1)" style="width:22px;height:22px;border-radius:4px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:14px;cursor:pointer;line-height:1">−</button><span style="color:${bonusCol};font-weight:700;min-width:28px;text-align:center">${bonusStr}</span><button onclick="adjMPMod(1)" style="width:22px;height:22px;border-radius:4px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:14px;cursor:pointer;line-height:1">+</button>`;
+  c.appendChild(row);
 }
 
 function renderStats(){
@@ -655,10 +672,19 @@ function renderStats(){
   c.className='stats-grid';
   c.innerHTML=keys.map(k=>{
     const g=green.includes(k);
+    const mod=(S.statMods||{})[k]||0;
+    const eff=effStat(k);
+    const modStr=mod===0?'0':(mod>0?'+'+mod:''+mod);
+    const modCol=mod>0?'var(--green)':mod<0?'var(--red)':'var(--muted)';
     return `<div class="stat-box"><div class="stat-label">${k}</div>${
       editMode
         ?`<input class="e-stat${g?' green':''}" type="number" min="1" max="99" value="${S.stats[k]}" oninput="S.stats['${k}']=parseInt(this.value)||0;save();renderStats();renderSkillSections()">`
-        :`<div class="stat-value${g?' green':''}">${S.stats[k]}</div>`
+        :`<div class="stat-value${g?' green':''}">${eff}</div>
+         <div style="display:flex;align-items:center;justify-content:center;gap:2px;margin-top:3px">
+           <button onclick="adjStatMod('${k}',-1)" style="width:17px;height:17px;border-radius:3px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:11px;cursor:pointer;line-height:1;padding:0">−</button>
+           <span style="font-size:10px;color:${modCol};min-width:22px;text-align:center;font-weight:600">${modStr}</span>
+           <button onclick="adjStatMod('${k}',1)" style="width:17px;height:17px;border-radius:3px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:11px;cursor:pointer;line-height:1;padding:0">+</button>
+         </div>`
     }</div>`;
   }).join('')+`<div class="stat-box"><div class="stat-label">EXP mod</div><div class="stat-value" style="font-size:16px">+0</div></div>`;
 }
@@ -1213,7 +1239,7 @@ function loadBgNotes(){
 // ══ ACTIONS ══
 function change(type,delta){
   if(type==='lp') S.lp.current=Math.max(0,Math.min(S.lp.max,S.lp.current+delta));
-  if(type==='mp') S.mp.current=Math.max(0,Math.min(S.mp.max,S.mp.current+delta));
+  if(type==='mp') S.mp.current=Math.max(0,Math.min(mpMax(),S.mp.current+delta));
   save();renderTrackers();renderMPDots();
 }
 
@@ -1276,6 +1302,18 @@ function showTab(tab){
 }
 
 function saveBgNotes(){S.bgNotes=document.getElementById('bg-notes').value;save();}
+
+// ══ STAT TEMP MODS ══
+function adjStatMod(k,delta){
+  if(!S.statMods)S.statMods={};
+  S.statMods[k]=(S.statMods[k]||0)+delta;
+  save();renderStats();renderSkillSections();renderTrackers();renderMPDots();
+}
+function adjMPMod(delta){
+  S.mp.modMax=(S.mp.modMax||0)+delta;
+  S.mp.current=Math.min(S.mp.current,mpMax());
+  save();renderTrackers();renderMPDots();
+}
 
 // ══ SKILL CHECKS ══
 function toggleSkillCheck(n,type){
