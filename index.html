@@ -137,9 +137,10 @@ textarea:focus{outline:none;border-color:var(--green-dim)}
 .e-stat.green{color:var(--green)}
 .e-ta{width:100%;background:var(--card2);border:1px solid var(--green-dim);border-radius:6px;color:var(--text);padding:8px;font-size:12px;font-family:inherit;line-height:1.5;resize:none;outline:none}
 .e-ta:focus{border-color:var(--green)}
-/* SUCCESS COUNTER */
-.succ-btn{min-width:26px;height:22px;border-radius:11px;border:1px solid var(--border);background:var(--card2);color:var(--muted);font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0 5px;transition:all .15s;user-select:none}
-.succ-btn.has{border-color:var(--green-dim);background:rgba(61,255,170,.12);color:var(--green);font-weight:700}
+/* SKILL CHECK BOXES */
+.skill-check{width:24px;height:24px;border-radius:5px;border:1px solid var(--border);background:var(--card2);color:var(--muted);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;user-select:none;line-height:1}
+.skill-check.ok{border-color:var(--green-dim);background:rgba(61,255,170,.15);color:var(--green)}
+.skill-check.ko{border-color:rgba(255,77,109,.4);background:rgba(255,77,109,.12);color:var(--red)}
 /* QUEST */
 .quest-active{background:var(--card2);border-radius:12px;padding:14px;margin-bottom:10px;border-left:3px solid var(--green)}
 .quest-archive{background:var(--card2);border-radius:10px;padding:10px 12px;margin-bottom:6px;opacity:.7}
@@ -547,6 +548,11 @@ function migrateState(S){
   Object.keys(D.skillMods).forEach(k=>{ if(S.skillMods[k]===undefined) S.skillMods[k]=D.skillMods[k]; });
   S.hitLocations=S.hitLocations||D.hitLocations;
   if(!S.skillSuccesses) S.skillSuccesses={};
+  // Migration : ancien format numérique → {s, f}
+  Object.keys(S.skillSuccesses).forEach(k=>{
+    if(typeof S.skillSuccesses[k]==='number')
+      S.skillSuccesses[k]={s:S.skillSuccesses[k]>0,f:false};
+  });
   // Migration vers système de pages
   if(!S.pages){
     S.pages=[];
@@ -756,11 +762,10 @@ function mkSkillRow(skill,trained,showDot,type,idx){
   const modStr=(mod>=0?'+':'')+mod;
   const n=safeN(skill.name);
   const dot=showDot?`<div class="skill-dot ${trained?'':'no'}"></div>`:`<div style="width:14px;flex-shrink:0"></div>`;
-  const succ=S.skillSuccesses[skill.name]||0;
-  const succBtn=`<div style="display:flex;align-items:center;gap:2px;flex-shrink:0">
-    <button class="succ-btn${succ>0?' has':''}" onclick="incSuccess('${n}',-1)" style="padding:0 4px" title="−1">−</button>
-    <span class="succ-btn${succ>0?' has':''}" style="min-width:20px;cursor:default">${succ>0?succ:'·'}</span>
-    <button class="succ-btn${succ>0?' has':''}" onclick="incSuccess('${n}',1)" style="padding:0 4px" title="+1">+</button>
+  const chk=S.skillSuccesses[skill.name]||{s:false,f:false};
+  const succBtn=`<div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+    <button class="skill-check${chk.s?' ok':''}" onclick="toggleSkillCheck('${n}','s')" title="Réussi au moins une fois">✓</button>
+    <button class="skill-check${chk.f?' ko':''}" onclick="toggleSkillCheck('${n}','f')" title="Échec critique">✕</button>
   </div>`;
   if(editMode&&type!==undefined&&idx!==undefined){
     return `<div class="skill-row">
@@ -1272,10 +1277,11 @@ function showTab(tab){
 
 function saveBgNotes(){S.bgNotes=document.getElementById('bg-notes').value;save();}
 
-// ══ SKILL SUCCESSES ══
-function incSuccess(n,delta){
+// ══ SKILL CHECKS ══
+function toggleSkillCheck(n,type){
   if(!S.skillSuccesses)S.skillSuccesses={};
-  S.skillSuccesses[n]=Math.max(0,(S.skillSuccesses[n]||0)+delta);
+  const c=S.skillSuccesses[n]||{s:false,f:false};
+  S.skillSuccesses[n]={...c,[type]:!c[type]};
   save();renderSkillSections();
 }
 
