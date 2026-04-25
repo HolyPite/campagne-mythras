@@ -52,6 +52,11 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .hit-hp-display{font-size:14px;font-weight:700;min-width:38px;text-align:center;color:var(--green)}
 .hit-hp-display.damaged{color:var(--yellow)}
 .hit-hp-display.critical{color:var(--red)}
+.hit-armor{display:flex;align-items:center;gap:4px;background:var(--card2);border-radius:6px;padding:2px 6px;flex-shrink:0}
+.hit-armor-val{font-size:13px;font-weight:700;min-width:16px;text-align:center;color:var(--muted)}
+.hit-armor-val.has{color:var(--yellow)}
+.hit-armor-btn{width:20px;height:20px;border-radius:4px;border:none;background:none;color:var(--muted);font-size:13px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center}
+.hit-armor-btn:hover{color:var(--text)}
 .skill-row{display:flex;align-items:center;padding:7px 0;border-bottom:1px solid rgba(34,34,64,.5);gap:8px}
 .skill-row:last-child{border-bottom:none}
 .skill-dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0}
@@ -505,13 +510,13 @@ const D = {
   statMods:{},
   fatigue:'Fresh',
   hitLocations:[
-    {name:'Tête',range:'19-20',maxHP:4,currentHP:4},
-    {name:'Bras Gauche',range:'16-18',maxHP:3,currentHP:3},
-    {name:'Bras Droit',range:'13-15',maxHP:3,currentHP:3},
-    {name:'Poitrine',range:'10-12',maxHP:5,currentHP:5},
-    {name:'Abdomen',range:'7-9',maxHP:4,currentHP:4},
-    {name:'Jambe Gauche',range:'4-6',maxHP:4,currentHP:4},
-    {name:'Jambe Droite',range:'1-3',maxHP:4,currentHP:4},
+    {name:'Tête',range:'19-20',maxHP:4,currentHP:4,armor:0},
+    {name:'Bras Gauche',range:'16-18',maxHP:3,currentHP:3,armor:0},
+    {name:'Bras Droit',range:'13-15',maxHP:3,currentHP:3,armor:0},
+    {name:'Poitrine',range:'10-12',maxHP:5,currentHP:5,armor:0},
+    {name:'Abdomen',range:'7-9',maxHP:4,currentHP:4,armor:0},
+    {name:'Jambe Gauche',range:'4-6',maxHP:4,currentHP:4,armor:0},
+    {name:'Jambe Droite',range:'1-3',maxHP:4,currentHP:4,armor:0},
   ],
   skillMods:{},quests:[],
   bgNotes:'',sessionNotes:'',generalNotes:'',skillSuccesses:{},
@@ -562,6 +567,7 @@ function migrateState(S){
   if(!S.skillMods) S.skillMods=JSON.parse(JSON.stringify(D.skillMods));
   Object.keys(D.skillMods).forEach(k=>{ if(S.skillMods[k]===undefined) S.skillMods[k]=D.skillMods[k]; });
   S.hitLocations=S.hitLocations||D.hitLocations;
+  S.hitLocations.forEach(l=>{ if(l.armor===undefined) l.armor=0; });
   (S.equipment||[]).forEach(e=>{ if(e.qty===undefined) e.qty=1; });
   if(!S.statMods) S.statMods={};
   if(S.mp.modMax===undefined) S.mp.modMax=0;
@@ -1057,6 +1063,8 @@ function renderHitLocs(){
   c.innerHTML=S.hitLocations.map((loc,i)=>{
     const ratio=loc.maxHP>0?loc.currentHP/loc.maxHP:0;
     const cls=loc.currentHP<=0?'critical':ratio<=0.5?'damaged':'';
+    const ap=loc.armor||0;
+    const apCls=ap>0?' has':'';
     if(editMode){return `<div class="hit-location">
       <input class="e-input sm" type="text" value="${esc(loc.range)}" oninput="S.hitLocations[${i}].range=this.value;save()" style="width:38px;font-size:11px;color:var(--muted);text-align:center">
       <input class="e-input w100" type="text" value="${esc(loc.name)}" oninput="S.hitLocations[${i}].name=this.value;save()" style="font-size:13px">
@@ -1064,6 +1072,9 @@ function renderHitLocs(){
         <button class="hit-btn" onclick="changeHP(${i},-1)">−</button>
         <span style="font-size:13px;font-weight:700;color:var(--green)">${loc.currentHP}/</span><input class="e-input num" type="number" min="1" max="30" value="${loc.maxHP}" oninput="S.hitLocations[${i}].maxHP=parseInt(this.value)||1;save()" style="font-size:13px;font-weight:700;color:var(--green)">
         <button class="hit-btn" onclick="changeHP(${i},1)">+</button>
+      </div>
+      <div class="hit-armor" title="Points d'Armure">
+        🛡<input class="e-input num" type="number" min="0" max="20" value="${ap}" oninput="S.hitLocations[${i}].armor=Math.max(0,parseInt(this.value)||0);save()" style="width:32px;font-size:13px;font-weight:700;color:var(--yellow)">
       </div>
       <button class="del-btn" onclick="S.hitLocations.splice(${i},1);save();renderHitLocs()">×</button>
     </div>`;}
@@ -1075,10 +1086,15 @@ function renderHitLocs(){
         <div class="hit-hp-display ${cls}">${loc.currentHP}/${loc.maxHP}</div>
         <button class="hit-btn" onclick="changeHP(${i},1)">+</button>
       </div>
+      <div class="hit-armor" title="Points d'Armure — clic pour ajuster">
+        <button class="hit-armor-btn" onclick="changeArmor(${i},-1)">−</button>
+        <span class="hit-armor-val${apCls}">🛡${ap}</span>
+        <button class="hit-armor-btn" onclick="changeArmor(${i},1)">+</button>
+      </div>
     </div>`;
   }).join('');
   const a=document.getElementById('add-hitlec');
-  if(a) a.innerHTML=editMode?`<button class="add-btn" onclick="S.hitLocations.push({name:'Localisation',range:'--',maxHP:5,currentHP:5});save();renderHitLocs()">+ Ajouter</button>`:'';
+  if(a) a.innerHTML=editMode?`<button class="add-btn" onclick="S.hitLocations.push({name:'Localisation',range:'--',maxHP:5,currentHP:5,armor:0});save();renderHitLocs()">+ Ajouter</button>`:'';
 }
 
 function renderWeapons(){
@@ -1314,6 +1330,12 @@ function changeHP(idx,delta){
   save();renderHitLocs();
 }
 
+function changeArmor(idx,delta){
+  const loc=S.hitLocations[idx];
+  loc.armor=Math.max(0,Math.min(20,(loc.armor||0)+delta));
+  save();renderHitLocs();
+}
+
 function setFatigue(name){S.fatigue=name;save();renderFatigue();}
 
 function adjMod(name,delta){
@@ -1468,7 +1490,7 @@ function exportText(){
   S.sorcSpells.forEach(s=>t+=`  ${s.name} (${s.cost}) — ${s.desc}\n`);
   t+=HR('COMBAT');
   t+=hr('Points de vie');
-  S.hitLocations.forEach(l=>t+=`  ${l.range} ${l.name}: ${l.currentHP}/${l.maxHP}\n`);
+  S.hitLocations.forEach(l=>t+=`  ${l.range} ${l.name}: ${l.currentHP}/${l.maxHP} PV${l.armor?'  🛡'+l.armor+' PA':''}\n`);
   t+=hr('Armes');
   S.weapons.forEach(w=>t+=`  ${w.name}: ${w.dmg} | Taille:${w.size} Portée:${w.range} AP/HP:${w.apHP}${w.effects?' | '+w.effects:''}\n`);
   t+=HR('PASSIONS & CAPACITÉS');
