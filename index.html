@@ -507,7 +507,7 @@ const D = {
   weapons:[],equipment:[],  // equipment items: {name, qty, enc}
   enc:{current:'0',encumbered:'0',overloaded:'0'},
   lp:{current:3,max:3},mp:{current:10,modMax:0},
-  statMods:{},
+  statMods:{},expMod:0,
   fatigue:'Fresh',
   hitLocations:[
     {name:'Tête',range:'19-20',maxHP:4,currentHP:4,armor:0},
@@ -570,6 +570,7 @@ function migrateState(S){
   S.hitLocations.forEach(l=>{ if(l.armor===undefined) l.armor=0; });
   (S.equipment||[]).forEach(e=>{ if(e.qty===undefined) e.qty=1; });
   if(!S.statMods) S.statMods={};
+  if(S.expMod===undefined) S.expMod=0;
   if(S.mp.modMax===undefined) S.mp.modMax=0;
   delete S.mp.max;
   if(!S.skillSuccesses) S.skillSuccesses={};
@@ -707,7 +708,21 @@ function renderStats(){
            <button onclick="adjStatMod('${k}',1)" style="width:17px;height:17px;border-radius:3px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:11px;cursor:pointer;line-height:1;padding:0">+</button>
          </div>`
     }</div>`;
-  }).join('')+`<div class="stat-box"><div class="stat-label">EXP mod</div><div class="stat-value" style="font-size:16px">+0</div></div>`;
+  }).join('')+(()=>{
+    const em=S.expMod||0;
+    const emStr=em>=0?'+'+em:''+em;
+    const emCol=em>0?'var(--green)':em<0?'var(--red)':'var(--muted)';
+    return `<div class="stat-box"><div class="stat-label">EXP mod</div>${
+      editMode
+        ?`<input class="e-stat" type="number" value="${em}" oninput="S.expMod=parseInt(this.value)||0;save();renderStats()" style="color:var(--yellow)">`
+        :`<div class="stat-value" style="font-size:16px;color:${emCol}">${emStr}</div>
+          <div style="display:flex;align-items:center;justify-content:center;gap:2px;margin-top:3px">
+            <button onclick="S.expMod=(S.expMod||0)-1;save();renderStats()" style="width:17px;height:17px;border-radius:3px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:11px;cursor:pointer;line-height:1;padding:0">−</button>
+            <span style="font-size:10px;color:${emCol};min-width:22px;text-align:center;font-weight:600">${emStr}</span>
+            <button onclick="S.expMod=(S.expMod||0)+1;save();renderStats()" style="width:17px;height:17px;border-radius:3px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:11px;cursor:pointer;line-height:1;padding:0">+</button>
+          </div>`
+    }</div>`;
+  })();
 }
 
 function renderDerivedAttrs(){
