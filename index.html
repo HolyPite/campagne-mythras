@@ -209,6 +209,27 @@ textarea:focus{outline:none;border-color:var(--green-dim)}
 @keyframes shake{0%,100%{transform:translateX(0) rotate(0)}20%{transform:translateX(-5px) rotate(-4deg)}40%{transform:translateX(5px) rotate(4deg)}60%{transform:translateX(-4px) rotate(-2deg)}80%{transform:translateX(3px) rotate(2deg)}}
 @keyframes diePop{0%{transform:scale(0) rotate(-20deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
 @keyframes totalPop{0%{transform:scale(.4);opacity:0}100%{transform:scale(1);opacity:1}}
+.spell-cast-bar{display:flex;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
+.cast-btn{flex:1;padding:7px;border-radius:7px;border:1px solid var(--green-dim);background:rgba(61,255,170,.06);color:var(--green);font-size:12px;font-weight:600;cursor:pointer}
+.cast-btn.fumble{border-color:rgba(255,77,109,.3);background:rgba(255,77,109,.05);color:var(--red)}
+.sorc-calc{background:var(--card2);border-radius:10px;padding:14px;margin-top:10px;border:1px solid var(--green-dim)}
+.calc-header{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.calc-stat{font-size:11px;color:var(--muted);background:var(--card);border-radius:6px;padding:5px 10px}
+.calc-stat span{color:var(--green);font-weight:700}
+.calc-param-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(34,34,64,.5)}
+.calc-param-row:last-of-type{border-bottom:none}
+.calc-param-name{font-size:12px;color:var(--muted);width:72px;flex-shrink:0}
+.calc-param-eff{flex:1;font-size:12px;color:var(--text)}
+.calc-result{display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);flex-wrap:wrap;gap:8px}
+.calc-cost{font-size:20px;font-weight:700;color:var(--green)}
+.calc-cost-label{font-size:11px;color:var(--muted)}
+.calc-budget{font-size:12px;padding:4px 10px;border-radius:6px;background:var(--card);border:1px solid var(--border)}
+.calc-budget.over{border-color:var(--red);color:var(--red)}
+.calc-actions{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.calc-btn{flex:1;padding:10px;border-radius:8px;border:none;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s}
+.calc-btn.cast{background:rgba(61,255,170,.12);border:1px solid var(--green-dim);color:var(--green)}
+.calc-btn.crit{background:rgba(255,209,102,.1);border:1px solid rgba(255,209,102,.3);color:var(--yellow)}
+.calc-btn.reset{background:var(--card);border:1px solid var(--border);color:var(--muted)}
 </style>
 </head>
 <body>
@@ -342,6 +363,7 @@ textarea:focus{outline:none;border-color:var(--green-dim)}
         <div class="card-title">⚡ Sorcellerie</div>
         <div id="sorc-quote"></div>
         <div id="sorc-spells"></div>
+        <div id="sorc-calc"></div>
         <div id="add-sorc"></div>
       </div>
     </div>
@@ -459,6 +481,8 @@ function filterSkills(val){skillFilter=val.toLowerCase().trim();renderSkillSecti
 
 // ══ EDIT MODE ══
 let editMode = false;
+let calcPts = {combine:0,duration:0,magnitude:0,range:0,targets:0};
+let calcMaxPts = 0;
 function toggleEdit(){
   editMode=!editMode;
   const b=document.getElementById('edit-btn');
@@ -634,7 +658,7 @@ function renderAll(){
   ['perso','skills','magie','combat'].forEach(t=>{const e=document.getElementById('eb-'+t);if(e)e.innerHTML=eb();});
   renderStats(); renderDerivedAttrs(); renderIdentity(); renderMoney(); renderAbilities();
   renderResistances(); renderStdSkills(); renderProfSkills(); renderMagicSkills(); renderCombatStyles();
-  renderPassions(); renderFolkSpells(); renderSorcSpells();
+  renderPassions(); renderFolkSpells(); renderSorcSpells(); renderSorcCalc();
   renderFatigue(); renderHitLocs(); renderWeapons(); renderEquipment(); renderJournal(); loadBgNotes();
   initDiceTab();
 }
@@ -1000,7 +1024,14 @@ function renderFolkSpells(){
     c.innerHTML=S.folkSpells.map(s=>`
       <div class="spell-card folk" onclick="this.classList.toggle('open')">
         <div class="spell-header"><div class="spell-name">${esc(s.name)}</div><div class="spell-cost folk">${esc(s.cost)}</div></div>
-        <div class="spell-detail"><div class="spell-desc">${esc(s.desc)}</div><div class="spell-notes">🌿 ${esc(s.notes)}</div></div>
+        <div class="spell-detail">
+          <div class="spell-desc">${esc(s.desc)}</div>
+          <div class="spell-notes">🌿 ${esc(s.notes)}</div>
+          <div class="spell-cast-bar" onclick="event.stopPropagation()">
+            <button class="cast-btn" onclick="change('mp',-1)">⚡ Lancer (1 MP)</button>
+            <button class="cast-btn fumble" onclick="fumbleFolk()">💀 Fumble (1d3 MP)</button>
+          </div>
+        </div>
       </div>`).join('');
   }
   const a=document.getElementById('add-folk');
@@ -1032,6 +1063,79 @@ function renderSorcSpells(){
   }
   const a=document.getElementById('add-sorc');
   if(a) a.innerHTML=editMode?`<button class="add-btn" onclick="S.sorcSpells.push({name:'Nouveau sort',cost:'1+ MP',desc:'',notes:''});save();renderSorcSpells()">+ Ajouter</button>`:'';
+  if(!editMode) renderSorcCalc();
+}
+
+function renderSorcCalc(){
+  const c=document.getElementById('sorc-calc');if(!c)return;
+  if(editMode){c.innerHTML='';return;}
+  const pow=effStat('POW');
+  // find Invocation & Shaping in magicSkills
+  const invocSkill=S.magicSkills.find(s=>s.name.toLowerCase().includes('invoc'));
+  const shapingSkill=S.magicSkills.find(s=>s.name.toLowerCase().includes('shap'));
+  const invocTotal=invocSkill?calcBase(invocSkill.formula)+(S.skillMods[invocSkill.name]||0):0;
+  const shapingTotal=shapingSkill?calcBase(shapingSkill.formula)+(S.skillMods[shapingSkill.name]||0):0;
+  calcMaxPts=Math.floor(shapingTotal/10);
+  const intensite=Math.floor(invocTotal/10);
+  const totalUsed=Object.values(calcPts).reduce((a,b)=>a+b,0);
+  const mpCost=1+totalUsed;
+  const mpCrit=Math.ceil(mpCost*0.5);
+  const mpCurr=S.mp.current;
+  const over=totalUsed>calcMaxPts;
+  // effective values per param
+  const RANGE_TABLE=['Toucher',`${pow} m`,`${5*pow} m`,`${10*pow} m`,`${50*pow} m`,`${100*pow} m`];
+  const params=[
+    {key:'combine',  label:'Combine',   eff:`${calcPts.combine+1} sort${calcPts.combine>0?'s':''}`},
+    {key:'duration', label:'Durée',     eff:`${(calcPts.duration+1)*pow} min`},
+    {key:'magnitude',label:'Magnitude', eff:`${calcPts.magnitude+1}`},
+    {key:'range',    label:'Portée',    eff:RANGE_TABLE[Math.min(calcPts.range,5)]},
+    {key:'targets',  label:'Cibles',    eff:`${calcPts.targets+1}`},
+  ];
+  c.innerHTML=`
+    <div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:10px;letter-spacing:.5px">⚙️ CALCULATEUR SHAPING</div>
+    <div class="calc-header">
+      ${invocSkill?`<div class="calc-stat">Invocation <span>${invocTotal}%</span> — Intensité <span>${intensite}</span></div>`:'<div class="calc-stat" style="color:var(--muted)">Invocation non configurée</div>'}
+      ${shapingSkill?`<div class="calc-stat">Shaping <span>${shapingTotal}%</span> — Max <span>${calcMaxPts} pts</span></div>`:'<div class="calc-stat" style="color:var(--muted)">Shaping non configuré</div>'}
+    </div>
+    ${params.map(p=>`
+    <div class="calc-param-row">
+      <div class="calc-param-name">${p.label}</div>
+      <button class="adj-btn" onclick="adjCalc('${p.key}',-1)">−</button>
+      <div style="min-width:20px;text-align:center;font-size:13px;font-weight:700;color:var(--green)">${calcPts[p.key]}</div>
+      <button class="adj-btn" onclick="adjCalc('${p.key}',1)">+</button>
+      <div class="calc-param-eff">${p.eff}</div>
+    </div>`).join('')}
+    <div class="calc-result">
+      <div>
+        <div class="calc-cost">${mpCost} <span style="font-size:13px;font-weight:400">MP</span></div>
+        <div class="calc-cost-label">Coût de lancer</div>
+      </div>
+      <div class="calc-budget ${over?'over':''}">${totalUsed}/${calcMaxPts} pts${over?' ⚠️':''}</div>
+      <div style="font-size:12px;color:var(--muted)">PM restants<br><span style="font-weight:700;color:${mpCurr-mpCost>=0?'var(--green)':'var(--red)'}">${mpCurr-mpCost}</span></div>
+    </div>
+    <div class="calc-actions">
+      <button class="calc-btn cast" onclick="castSorcery(1)">⚡ Lancer (${mpCost} MP)</button>
+      <button class="calc-btn crit" onclick="castSorcery(0.5)">✨ Critique (${mpCrit} MP)</button>
+      <button class="calc-btn reset" onclick="Object.keys(calcPts).forEach(k=>calcPts[k]=0);renderSorcCalc()">↺ Reset</button>
+    </div>`;
+}
+
+function adjCalc(param, delta){
+  const totalUsed=Object.values(calcPts).reduce((a,b)=>a+b,0);
+  if(delta>0 && totalUsed>=calcMaxPts) return;
+  calcPts[param]=Math.max(0,calcPts[param]+delta);
+  renderSorcCalc();
+}
+
+function castSorcery(factor){
+  const totalUsed=Object.values(calcPts).reduce((a,b)=>a+b,0);
+  const mpCost=Math.ceil((1+totalUsed)*factor);
+  change('mp',-mpCost);
+}
+
+function fumbleFolk(){
+  const loss=Math.ceil(Math.random()*3);
+  change('mp',-loss);
 }
 
 function renderFatigue(){
