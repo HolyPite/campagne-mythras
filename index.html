@@ -821,10 +821,9 @@ function mkSkillRow(skill,trained,showDot,type,idx){
         <input class="e-input w100" type="text" value="${esc(skill.name)}" oninput="renameSkill('${type}',${idx},this.value)">
         <input class="e-input w100" type="text" value="${esc(skill.formula)}" oninput="S.${type}Skills[${idx}].formula=this.value;save();renderSkillSections()" style="font-size:10px;color:var(--muted);margin-top:2px">
       </div>
-      <div class="skill-mod-ctrl">
-        <button class="skill-mod-btn" onclick="adjMod('${n}',-1)">−</button>
-        <span class="skill-mod-val">${modStr}</span>
-        <button class="skill-mod-btn" onclick="adjMod('${n}',1)">+</button>
+      <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+        <span style="font-size:10px;color:var(--muted)">mod</span>
+        <input class="e-input num" type="number" value="${mod}" oninput="setMod('${n}',this.value);renderSkillSections()" style="width:48px;text-align:center;font-weight:700">
       </div>
       <div class="skill-pct">${total}%</div>
       <button class="del-btn" onclick="delSkill('${type}',${idx})">×</button>
@@ -851,17 +850,23 @@ function renderResistances(){
   c.innerHTML=RESIST.map(r=>{
     const base=calcBase(r.formula),mod=(S.skillMods[r.name]||0),total=base+mod;
     const modStr=(mod>=0?'+':'')+mod,n=safeN(r.name),isW=r.name==='Willpower';
+    const modCtrl=editMode
+      ?`<div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+          <span style="font-size:10px;color:var(--muted)">mod</span>
+          <input class="e-input num" type="number" value="${mod}" oninput="setMod('${n}',this.value);renderResistances()" style="width:48px;text-align:center;font-weight:700">
+        </div>`
+      :`<div class="skill-mod-ctrl">
+          <button class="skill-mod-btn" onclick="adjMod('${n}',-1)">−</button>
+          <span class="skill-mod-val">${modStr}</span>
+          <button class="skill-mod-btn" onclick="adjMod('${n}',1)">+</button>
+        </div>`;
     return `<div class="skill-row">
       <div style="width:14px;flex-shrink:0"></div>
       <div class="skill-name-col">
         <div class="skill-name" style="font-weight:700;${isW?'color:var(--green)':''}">${r.name}</div>
         <div class="skill-base-formula">${r.formula} = ${base}</div>
       </div>
-      <div class="skill-mod-ctrl">
-        <button class="skill-mod-btn" onclick="adjMod('${n}',-1)">−</button>
-        <span class="skill-mod-val">${modStr}</span>
-        <button class="skill-mod-btn" onclick="adjMod('${n}',1)">+</button>
-      </div>
+      ${modCtrl}
       <div class="skill-pct" style="${isW?'color:var(--green)':''}">${total}%</div>
     </div>`;
   }).join('');
@@ -914,10 +919,9 @@ function renderCombatStyles(){
       </div>
       <div style="display:flex;align-items:center;gap:8px;padding-top:8px;border-top:1px solid var(--border)">
         <div style="font-size:11px;color:var(--muted);flex:1">${cs.formula} = ${base}</div>
-        <div class="skill-mod-ctrl">
-          <button class="skill-mod-btn" onclick="adjMod('${n}',-1)">−</button>
-          <span class="skill-mod-val">${modStr}</span>
-          <button class="skill-mod-btn" onclick="adjMod('${n}',1)">+</button>
+        <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+          <span style="font-size:10px;color:var(--muted)">mod</span>
+          <input class="e-input num" type="number" value="${mod}" oninput="setMod('${n}',this.value);renderCombatStyles()" style="width:48px;text-align:center;font-weight:700">
         </div>
         <div class="skill-pct">${total}%</div>
       </div>
@@ -1342,6 +1346,12 @@ function adjMod(name,delta){
   if(!S.skillMods)S.skillMods={};
   S.skillMods[name]=(S.skillMods[name]||0)+delta;
   save();renderSkillSections();
+}
+
+function setMod(name,value){
+  if(!S.skillMods)S.skillMods={};
+  S.skillMods[name]=parseInt(value)||0;
+  save();
 }
 
 function renderSkillSections(){
