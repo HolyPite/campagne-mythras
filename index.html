@@ -406,12 +406,7 @@ textarea:focus{outline:none;border-color:var(--green-dim)}
         </div>
         <div id="dice-history"><div style="color:var(--muted);font-size:12px">Aucun lancer</div></div>
       </div>
-    </div>
-
-    <!-- JOURNAL -->
-    <div class="tab" id="tab-journal">
-      <div id="journal-pages"></div>
-      <div class="card" style="margin-top:4px">
+      <div class="card">
         <div class="card-title">💾 Export Fiche</div>
         <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Sauvegarde ou partage ta fiche personnage.</div>
         <div style="display:flex;gap:8px;flex-direction:column">
@@ -419,12 +414,17 @@ textarea:focus{outline:none;border-color:var(--green-dim)}
           <button onclick="exportText()" style="padding:11px;background:rgba(255,209,102,.06);border:1px solid rgba(255,209,102,.25);border-radius:8px;color:var(--yellow);font-size:13px;cursor:pointer;font-weight:600;text-align:left">📄 Exporter en texte <span style="font-size:11px;font-weight:400;color:var(--muted)">— fiche lisible à partager</span></button>
         </div>
       </div>
-      <div class="card" style="margin-top:4px">
+      <div class="card">
         <div class="card-title">📌 Points de Sauvegarde</div>
         <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Crée des points de contrôle pour revenir en arrière en cas d'erreur.</div>
         <button onclick="saveCheckpoint()" style="width:100%;padding:11px;background:rgba(61,255,170,.06);border:1px solid var(--green-dim);border-radius:8px;color:var(--green);font-size:13px;cursor:pointer;font-weight:600;margin-bottom:10px">📌 Créer un point de sauvegarde</button>
         <div id="history-list"></div>
       </div>
+    </div>
+
+    <!-- JOURNAL -->
+    <div class="tab" id="tab-journal">
+      <div id="journal-pages"></div>
     </div>
 
   </div>
@@ -448,7 +448,7 @@ textarea:focus{outline:none;border-color:var(--green-dim)}
     <button class="nav-btn" onclick="showTab('skills')" id="nav-skills"><span class="nav-icon">🎯</span><span class="nav-label">Skills</span></button>
     <button class="nav-btn" onclick="showTab('magie')" id="nav-magie"><span class="nav-icon">⚡</span><span class="nav-label">Magie</span></button>
     <button class="nav-btn" onclick="showTab('combat')" id="nav-combat"><span class="nav-icon">⚔️</span><span class="nav-label">Combat</span></button>
-    <button class="nav-btn" onclick="showTab('dice')" id="nav-dice"><span class="nav-icon">🎲</span><span class="nav-label">Dés</span></button>
+    <button class="nav-btn" onclick="showTab('dice')" id="nav-dice"><span class="nav-icon">⚙️</span><span class="nav-label">Extra</span></button>
     <button class="nav-btn" onclick="showTab('journal')" id="nav-journal"><span class="nav-icon">📖</span><span class="nav-label">Journal</span></button>
   </nav>
 </div>
