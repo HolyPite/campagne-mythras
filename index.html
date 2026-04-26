@@ -57,8 +57,13 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .hit-armor-val.has{color:var(--yellow)}
 .hit-armor-btn{width:20px;height:20px;border-radius:4px;border:none;background:none;color:var(--muted);font-size:13px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center}
 .hit-armor-btn:hover{color:var(--text)}
-.skill-row{display:flex;align-items:center;padding:7px 0;border-bottom:1px solid rgba(34,34,64,.5);gap:8px}
+.skill-row{display:flex;align-items:center;padding:7px 0;border-bottom:1px solid rgba(34,34,64,.5);gap:8px;transition:opacity .1s}
 .skill-row:last-child{border-bottom:none}
+.skill-row.sk-dragging{opacity:.3;background:var(--card2)}
+.skill-row.sk-over-top{border-top:2px solid var(--green);border-bottom:none}
+.skill-row.sk-over-bot{border-bottom:2px solid var(--green)}
+.drag-handle{font-size:18px;color:var(--border);cursor:grab;padding:0 2px;touch-action:none;user-select:none;flex-shrink:0;line-height:1}
+.drag-handle:active{cursor:grabbing;color:var(--green)}
 .skill-dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0}
 .skill-dot.no{background:transparent;border:1px solid var(--border)}
 .skill-name-col{flex:1;min-width:0}
@@ -854,8 +859,9 @@ function mkSkillRow(skill,trained,showDot,type,idx){
     <button class="skill-check${chk.f?' ko':''}" onclick="toggleSkillCheck('${n}','f')" title="Échec critique">✕</button>
   </div>`;
   if(editMode&&type!==undefined&&idx!==undefined){
-    return `<div class="skill-row">
-      ${dot}
+    const canDrag=(type==='prof'||type==='magic')&&!skillFilter;
+    return `<div class="skill-row" data-drag-idx="${idx}" data-drag-type="${type}Skills">
+      ${canDrag?`<div class="drag-handle" title="Glisser pour réordonner">⠿</div>`:dot}
       <div class="skill-name-col">
         <input class="e-input w100" type="text" value="${esc(skill.name)}" oninput="renameSkill('${type}',${idx},this.value)">
         <input class="e-input w100" type="text" value="${esc(skill.formula)}" oninput="S.${type}Skills[${idx}].formula=this.value;save();renderSkillSections()" style="font-size:10px;color:var(--muted);margin-top:2px">
@@ -929,6 +935,7 @@ function renderProfSkills(){
     :(f?'<div style="color:var(--muted);font-size:12px;padding:8px">Aucune compétence trouvée</div>':'');
   const a=document.getElementById('add-prof');
   if(a) a.innerHTML=editMode&&!f?`<button class="add-btn" onclick="addSkill('prof')">+ Ajouter</button>`:'';
+  initDrag('prof-skills','profSkills');
 }
 
 function renderMagicSkills(){
@@ -939,6 +946,58 @@ function renderMagicSkills(){
     :(f?'<div style="color:var(--muted);font-size:12px;padding:8px">Aucune compétence trouvée</div>':'');
   const a=document.getElementById('add-magic');
   if(a) a.innerHTML=editMode&&!f?`<button class="add-btn" onclick="addSkill('magic')">+ Ajouter</button>`:'';
+  initDrag('magic-skills','magicSkills');
+}
+
+/* ── Drag & drop reorder ── */
+let _drag={active:false};
+function initDrag(containerId,arrName){
+  const c=document.getElementById(containerId);
+  if(!c||!editMode)return;
+  c.querySelectorAll('.drag-handle').forEach(h=>{
+    h.addEventListener('pointerdown',e=>{
+      e.preventDefault();
+      const row=h.closest('.skill-row');
+      const allRows=[...c.querySelectorAll('.skill-row')];
+      const fromIdx=allRows.indexOf(row);
+      if(fromIdx<0)return;
+      row.classList.add('sk-dragging');
+      row.style.pointerEvents='none';
+      _drag={active:true,arrName,fromIdx,toIdx:fromIdx,c,allRows,row};
+      document.addEventListener('pointermove',_onDragMove,{passive:true});
+      document.addEventListener('pointerup',_onDragEnd);
+    });
+  });
+}
+function _onDragMove(e){
+  if(!_drag.active)return;
+  const under=document.elementFromPoint(e.clientX,e.clientY);
+  const targetRow=under?.closest?.('.skill-row');
+  if(!targetRow||!_drag.allRows.includes(targetRow))return;
+  const toIdx=_drag.allRows.indexOf(targetRow);
+  if(toIdx===_drag.toIdx)return;
+  _drag.toIdx=toIdx;
+  _drag.allRows.forEach((r,i)=>{
+    r.classList.toggle('sk-over-top',i===toIdx&&toIdx<_drag.fromIdx);
+    r.classList.toggle('sk-over-bot',i===toIdx&&toIdx>_drag.fromIdx);
+  });
+}
+function _onDragEnd(){
+  document.removeEventListener('pointermove',_onDragMove);
+  document.removeEventListener('pointerup',_onDragEnd);
+  if(!_drag.active)return;
+  const{arrName,fromIdx,toIdx}=_drag;
+  _drag={active:false};
+  if(fromIdx!==toIdx){
+    const arr=S[arrName];
+    const[moved]=arr.splice(fromIdx,1);
+    arr.splice(toIdx,0,moved);
+    save();
+    if(arrName==='profSkills')renderProfSkills();
+    else if(arrName==='magicSkills')renderMagicSkills();
+  } else {
+    _drag.c?.querySelectorAll('.skill-row').forEach(r=>r.classList.remove('sk-dragging','sk-over-top','sk-over-bot'));
+  }
 }
 
 function renderCombatStyles(){
