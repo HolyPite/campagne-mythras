@@ -59,9 +59,9 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .hit-armor-btn:hover{color:var(--text)}
 .skill-row{display:flex;align-items:center;padding:7px 0;border-bottom:1px solid rgba(34,34,64,.5);gap:8px;transition:opacity .1s}
 .skill-row:last-child{border-bottom:none}
-.skill-row.sk-dragging{opacity:.3;background:var(--card2)}
-.skill-row.sk-over-top{border-top:2px solid var(--green);border-bottom:none}
-.skill-row.sk-over-bot{border-bottom:2px solid var(--green)}
+.skill-row.sk-dragging,.spell-card.sk-dragging{opacity:.3}
+.skill-row.sk-over-top,.spell-card.sk-over-top{border-top:2px solid var(--green)}
+.skill-row.sk-over-bot,.spell-card.sk-over-bot{border-bottom:2px solid var(--green)}
 .drag-handle{font-size:18px;color:var(--border);cursor:grab;padding:0 2px;touch-action:none;user-select:none;flex-shrink:0;line-height:1}
 .drag-handle:active{cursor:grabbing;color:var(--green)}
 .skill-dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0}
@@ -951,19 +951,19 @@ function renderMagicSkills(){
 
 /* ── Drag & drop reorder ── */
 let _drag={active:false};
-function initDrag(containerId,arrName){
+function initDrag(containerId,arrName,rowSel='skill-row'){
   const c=document.getElementById(containerId);
   if(!c||!editMode)return;
   c.querySelectorAll('.drag-handle').forEach(h=>{
     h.addEventListener('pointerdown',e=>{
       e.preventDefault();
-      const row=h.closest('.skill-row');
-      const allRows=[...c.querySelectorAll('.skill-row')];
+      const row=h.closest('.'+rowSel);
+      const allRows=[...c.querySelectorAll('.'+rowSel)];
       const fromIdx=allRows.indexOf(row);
       if(fromIdx<0)return;
       row.classList.add('sk-dragging');
       row.style.pointerEvents='none';
-      _drag={active:true,arrName,fromIdx,toIdx:fromIdx,c,allRows,row};
+      _drag={active:true,arrName,rowSel,fromIdx,toIdx:fromIdx,c,allRows,row};
       document.addEventListener('pointermove',_onDragMove,{passive:true});
       document.addEventListener('pointerup',_onDragEnd);
     });
@@ -996,7 +996,7 @@ function _onDragEnd(){
     if(arrName==='profSkills')renderProfSkills();
     else if(arrName==='magicSkills')renderMagicSkills();
   } else {
-    _drag.c?.querySelectorAll('.skill-row').forEach(r=>r.classList.remove('sk-dragging','sk-over-top','sk-over-bot'));
+    _drag.c?.querySelectorAll('.'+(_drag.rowSel||'skill-row')).forEach(r=>r.classList.remove('sk-dragging','sk-over-top','sk-over-bot'));
   }
 }
 
@@ -1072,6 +1072,7 @@ function renderFolkSpells(){
     c.innerHTML=S.folkSpells.map((s,i)=>`
       <div class="spell-card folk open" style="cursor:default">
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+          <div class="drag-handle" title="Glisser pour réordonner">⠿</div>
           <input class="e-input w100" type="text" value="${esc(s.name)}" oninput="S.folkSpells[${i}].name=this.value;save()" style="font-size:14px;font-weight:700">
           <input class="e-input sm" type="text" value="${esc(s.cost)}" oninput="S.folkSpells[${i}].cost=this.value;save()">
           <button class="del-btn" onclick="S.folkSpells.splice(${i},1);save();renderFolkSpells()">×</button>
@@ -1095,6 +1096,7 @@ function renderFolkSpells(){
   }
   const a=document.getElementById('add-folk');
   if(a) a.innerHTML=editMode?`<button class="add-btn" onclick="S.folkSpells.push({name:'Nouveau sort',cost:'1 MP',desc:'',notes:''});save();renderFolkSpells()">+ Ajouter</button>`:'';
+  initDrag('folk-spells','folkSpells','spell-card');
 }
 
 function renderSorcSpells(){
@@ -1106,6 +1108,7 @@ function renderSorcSpells(){
     c.innerHTML=S.sorcSpells.map((s,i)=>`
       <div class="spell-card open" style="cursor:default">
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+          <div class="drag-handle" title="Glisser pour réordonner">⠿</div>
           <input class="e-input w100" type="text" value="${esc(s.name)}" oninput="S.sorcSpells[${i}].name=this.value;save()" style="font-size:14px;font-weight:700">
           <input class="e-input sm" type="text" value="${esc(s.cost)}" oninput="S.sorcSpells[${i}].cost=this.value;save()">
           <button class="del-btn" onclick="S.sorcSpells.splice(${i},1);save();renderSorcSpells()">×</button>
@@ -1122,6 +1125,7 @@ function renderSorcSpells(){
   }
   const a=document.getElementById('add-sorc');
   if(a) a.innerHTML=editMode?`<button class="add-btn" onclick="S.sorcSpells.push({name:'Nouveau sort',cost:'1+ MP',desc:'',notes:''});save();renderSorcSpells()">+ Ajouter</button>`:'';
+  initDrag('sorc-spells','sorcSpells','spell-card');
   if(!editMode) renderSorcCalc();
 }
 
