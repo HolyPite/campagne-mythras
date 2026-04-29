@@ -8,13 +8,15 @@ Application web mobile de fiche de personnage pour le jeu de rôle **Mythras** (
 
 | Fichier | Rôle |
 |---------|------|
-| `index.html` | **Fichier principal** — app complète (HTML + CSS + JS single-file) |
+| `index.html` | Structure HTML — charge `styles.css` et `app.js` |
+| `styles.css` | Tout le CSS + animations de transition d'onglets |
+| `app.js` | Toute la logique JS (état, rendu, IndexedDB, swipe, export…) |
 | `manifest.json` | Manifest PWA — installable sur écran d'accueil mobile |
 | `sw.js` | Service Worker — cache offline + bannière de mise à jour |
 | `icon-192.png` / `icon-512.png` | Icônes PWA |
 | `nyxa-app.html` | Ancien fichier (conservé, ne plus modifier) |
 
-**Toujours travailler sur `index.html`.**
+**Travailler sur `index.html`, `styles.css` et `app.js` selon le besoin.**
 
 ## Fonctionnalités
 
@@ -98,6 +100,20 @@ total% = calcBase(formula) + skillMods[name]
 
 ## Règles de modification
 
-- Les changements sont appliqués directement sur `index.html`
+- HTML → `index.html`, CSS → `styles.css`, JS → `app.js`
 - `sw.js` : incrémenter `CACHE = 'mythras-vX'` à chaque déploiement pour invalider le cache
 - Personnage vierge par défaut (D) — stats à 10, listes vides, pas de données spécifiques
+
+## Architecture — nouveautés v3
+
+### Dessins du Journal (IndexedDB)
+Les `page.drawing` (data URL base64) sont stockés dans IndexedDB (`mythras_db`, store `drawings`), plus dans localStorage. La clé est `charId|pageId`. `page.hasDrawing: true` indique la présence d'un dessin. Migration automatique au démarrage via `migratePendingDrawings()`.
+
+### Rendu partiel
+`renderTab(tab)` ne re-rend que l'onglet actif. `renderAll()` = `renderHeader()` + `renderTab(currentTab)`.
+
+### Transitions d'onglets
+`showTab(tab, direction)` ajoute la classe CSS `slide-left` ou `slide-right` sur l'onglet entrant. Les keyframes sont dans `styles.css`.
+
+### Protection swipe
+Le swipe gauche/droite est bloqué si le touchstart démarre sur `input, textarea, select, canvas, .drag-handle, .draw-canvas, .canvas-wrap, [data-noswipe]`.
